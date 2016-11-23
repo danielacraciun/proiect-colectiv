@@ -9,5 +9,20 @@
 {% block title %} Login {% endblock %}
 
 {% block content %}
-
+{% if request.user.profile.role == READER %}
+Buna ziua, aveti rolul de cititor!
+[continut pt cititor aici!]
+{% endif %}
+{% if request.user.profile.role == CONTRIBUTOR %}
+Buna ziua, aveti rolul de contribuitor!
+[continut pt contribuitor aici!]
+{% endif %}
+{% if request.user.profile.role == MANAGEMENT %}
+Buna ziua, aveti rolul de manager!
+[continut pt manager aici!]
+{% endif %}
+{% if request.user.profile.role == ADMIN %}
+Buna ziua, aveti rolul de administrator!
+[continut pt administrator aici!]
+{% endif %}
 {% endblock %}
