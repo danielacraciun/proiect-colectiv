@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% load static from staticfiles %}
+
+{% block static_css %}
+    <link rel="stylesheet" href="{% static 'user/css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-2 text-center">
+        <br/>
+        <a href="{% url 'change_password' %}" class="btn btn-warning profile-btn">Change Password</a>
+    </div>
+    <div class="col-md-5 user-profile-information">
+    <h2>User Profile: {{ user.username }}</h2>
+    <table class="table table-striped">
+        <tbody>
+            <tr>
+                <td><b>Name</b></td>
+            </tr>
+            <tr class="info">
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+            </tr>
+            <tr>
+                <td><b>E-Mail</b></td>
+            </tr>
+            <tr class="info">
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td><b>Current Role</b></td>
+            </tr>
+            <tr class="info">
+                <td>{{ profile.get_role_display }}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+
+</div>
+{% endblock %}
+
+{% block static_js %}
+    <script src="{% static 'user/js/scripts.js' %}"></script>
+{% endblock %}
