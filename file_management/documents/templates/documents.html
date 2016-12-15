@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<form action="{% url 'workspace' %}" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <p>{{ form.non_field_errors }}</p>
+  <p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
+  <p>
+    {{ form.docfile.errors }}
+    {{ form.docfile }}
+  </p>
+  <p><input type="submit" value="Upload" /></p>
+</form>
+{% if documents %}
+<table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Created on</th>
+                <th>Last modified</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for req in documents %}
+            <tr>
+                <td>{{ req.filename }}</td>
+                <td>{{ req.author }}</td>
+                <td>{{ req.created_on }}</td>
+                <td> {{ req.last_modified }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+</table>
+{% else %}
+  <p>No documents.</p>
+{% endif %}
+
+{% endblock %}

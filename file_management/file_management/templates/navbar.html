@@ -13,6 +13,18 @@
     </div>
     <div id="navbar" class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
+          <li>
+              <a href="{% url 'workspace' %}">Zona de lucru</a>
+          </li>
+          <li>
+              <a href="{% url 'init_tasks' %}">Task-uri initiate</a>
+          </li>
+          <li>
+              <a href="{% url 'current_tasks' %}">Task-uri</a>
+          </li>
+          <li>
+              <a href="{% url 'fin_tasks' %}">Task-uri terminate</a>
+          </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">
