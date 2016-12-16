@@ -1,16 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
+{% if request.user.profile.role > 1 %}
 <form action="{% url 'workspace' %}" method="post" enctype="multipart/form-data">
   {% csrf_token %}
   <p>{{ form.non_field_errors }}</p>
-  <p>{{ form.docfile.label_tag }} {{ form.docfile.help_text }}</p>
   <p>
+    Upload a document:
+    {{ form.docfile.help_text }}
     {{ form.docfile.errors }}
     {{ form.docfile }}
   </p>
   <p><input type="submit" value="Upload" /></p>
 </form>
+<hr />
+{% else %}
+{% endif %}
 {% if documents %}
+<h1> Documents </h1>
 <table class="table table-striped">
         <thead>
             <tr>
@@ -18,21 +24,29 @@
                 <th>Author</th>
                 <th>Created on</th>
                 <th>Last modified</th>
+                <th>Details</th>
             </tr>
         </thead>
         <tbody>
         {% for req in documents %}
             <tr>
-                <td>{{ req.filename }}</td>
-                <td>{{ req.author }}</td>
-                <td>{{ req.created_on }}</td>
-                <td> {{ req.last_modified }}</td>
+                <td> {{ req.filename }} </td>
+                <td> {{ req.author }}</td>
+                <td> {{ req.created_on|date:'Y-m-d H:i' }}</td>
+                <td> {{ req.last_modified|date:'Y-m-d H:i' }}</td>
+                <td>
+                <div class="action-menu">
+                    <a class="btn btn-m btn-default btn-icon" title="View details" href="{% url 'document_detail' pk=req.id %}">
+                        <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span>
+                    </a>
+                </div>
+              </td> 
             </tr>
         {% endfor %}
         </tbody>
 </table>
 {% else %}
-  <p>No documents.</p>
+  <p>No documents uploaded yet.</p>
 {% endif %}
 
 {% endblock %}

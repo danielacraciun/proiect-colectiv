@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{% url 'workspace' %}" class="btn btn-default">
+    Return
+</a>
+{% if documents %}
+<h2>Document: {{doc_name}}</h2>
+<table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Author</th>
+                <th>Version</th>
+                <th>Status</th>
+                <th>Signed</th>
+                {% if request.user.profile.role > 1 %}
+                <th>Delete</th>
+                {% endif %}
+                <th>Download</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for req in documents %}
+            <tr>
+                <td> {{ req.author }}</td>
+                <td> {{ req.version|floatformat:2 }}</td>
+                <td> {{ req.get_status_display }} </td>
+                <td> {{ req.signed|yesno:"Yes,No" }}</td>
+                <td>
+                    {% if request.user.profile.role > 1 %}
+                      {% if request.user.username == req.author.username %}
+                      <a class="btn btn-m btn-default btn-icon" href="{% url 'remove_document' pk=req.id %}"
+                       title="Remove document">
+                      <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                      {% endif %}
+                    {% endif %}
+                </a>
+              </td>
+              <td>
+                <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=req.id %}"
+                 title="Download document">
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+</table>
+{% else %}
+  <p>No documents uploaded yet.</p>
+{% endif %}
+
+{% endblock %}

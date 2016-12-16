@@ -1,7 +1,6 @@
-import datetime
-
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 """
 DRAFT – prima versiune de document de tip draft va fi 0.1. Draft-urile urmatoare vor primi
 versiuni incrementate cu 0.1 (ex. 0.2, 0.3, ....., 0.12). Documentele de tip draft nu pot putea fi
@@ -31,24 +30,25 @@ class DocumentState:
         (BLOCKED, "Blocat")
     )
 
-#todo: add detail view to see versions uploaded, if draft can edit and delete
-#todo: add document flux
+
 class Document(models.Model):
     docfile = models.FileField(upload_to='documents/%Y/%m/%d/')
     filename = models.CharField(max_length=100, null=True, blank=True)
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='documents', null=True, blank=True)
-    created_on = models.DateField(blank=False, default=datetime.date.today)
-    last_modified = models.DateField(blank=False, default=datetime.date.today)
+    created_on = models.DateTimeField(blank=False, default=now)
+    last_modified = models.DateTimeField(blank=False, default=now)
     abstract = models.CharField(max_length=100, null=True, blank=True)
     keywords = models.CharField(max_length=100, null=True, blank=True)
     status = models.IntegerField(
         choices=DocumentState.CHOICES, default=DocumentState.DRAFT)
     version = models.FloatField(null=False, blank=False, default=0.1)
     signed = models.BooleanField(null=False, blank=False, default=False)
+    stale = models.BooleanField(null=False, blank=False, default=False)
+    stale_on = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return '{}'.format(self.title)
+        return '{}'.format(self.filename)
 
     def get_next_version(self):
         if self.status == DocumentState.DRAFT or DocumentState.REVISED_FINAL:
@@ -56,3 +56,17 @@ class Document(models.Model):
         elif self.status == DocumentState.FINAL:
             return self.version + 1
         return self.version
+
+    def file_link(self):
+        if self.docfile:
+            return "<a download href='%s'>download</a>" % (self.docfile.url,)
+        else:
+            return "No attachment"
+
+    def sign_doc(self):
+        if self.status == DocumentState.FINAL or DocumentState.REVISED_FINAL:
+            self.signed = True
+        else:
+            raise Exception
+
+    file_link.allow_tags = True
