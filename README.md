@@ -1,2 +1,12 @@
 # proiect-colectiv
-tbd
+- get python3 for your operating system and pip
+- get virtualenvwrapper for [windows](https://github.com/davidmarble/virtualenvwrapper-win/) or [linux](https://virtualenvwrapper.readthedocs.io/en/latest/index.html)
+- clone this repository
+- cd into the proiect-colectiv folder
+- run ```mkvirtualenv pc```
+- run ```workon pc``` to start the env (do this everytime you work on the project)
+- run ```pip install -r requirements.txt```
+- run ```./manage.py createsuperuser``` and complete the steps
+- run ```./manage.py runserver```
+- on ```localhost:8000``` is the app, on ```localhost:8000/admin``` you can add users, documents etc.
+- DONE! :tada:
