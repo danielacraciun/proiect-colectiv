@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'user.apps.UserConfig',
     'documents.apps.DocumentsConfig',
+    'templateuri.apps.TemplateuriConfig',
     'widget_tweaks',
     'datetimewidget',
     'django_nose',
