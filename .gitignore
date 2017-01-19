@@ -179,3 +179,5 @@ pip-selfcheck.json
 *.iml
 out
 gen
+
+file_management/db.sqlite3

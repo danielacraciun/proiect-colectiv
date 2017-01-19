@@ -1,16 +1,16 @@
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView, DetailView, DeleteView
-from django.template import RequestContext
-from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.utils.timezone import now
-
-from documents.models import Document
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
+from documents.models import Document
 from documents.utils import check_integrity
 
+
+# to do: add management commnd that deletes docs after 30 days
 
 def workspace(request):
     # Handle file upload
@@ -23,7 +23,8 @@ def workspace(request):
             for item in existing_versioned:
                 if origname.startswith(item.filename.split(".")[0]):
                     existing.append(item)
-            newdoc = Document(docfile=request.FILES['docfile'], author=request.user, filename=request.FILES['docfile'].name)
+            newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
+                              filename=request.FILES['docfile'].name)
             if existing and existing[0].status == 0:
                 newdoc.filename = existing[0].filename
                 newdoc.version = existing[0].version + 0.1
@@ -74,6 +75,7 @@ def workspace(request):
         {'documents': items, 'form': form}
     )
 
+
 class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
@@ -84,7 +86,7 @@ class InitiatedTasks(TemplateView):
 
 
 class CurrentTasks(TemplateView):
-    #requiring action fluxes
+    # requiring action fluxes
     template_name = 'tasks.html'
 
     def get_context_data(self, **kwargs):
