@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<form action="{% url 'workspace' %}" method="post" enctype="multipart/form-data" class = "form-horizontal" role = "form">
+  {% csrf_token %}
+  <p>{{ form.non_field_errors }}
+      {{ form.docfile.help_text }}
+        {{ form.docfile.errors }}
+  </p>
+     <div class = "form-group">
+     <label class = "col-sm-2 control-label">Incarca fisier</label>
+          <div class = "col-sm-10">
+            {{ form.docfile }}
+          </div>
+     </div>
+
+    <fieldset class="form-group">
+        {{ form.abstract.label_tag }}
+        {{ form.abstract| add_class:"form-control" }}
+    </fieldset>
+
+     <div class = "form-group">
+      <label class = "col-sm-2 control-label">Cuvinte cheie</label>
+     </div>
+      <div class = "col-sm-10">
+         {{ form.keywords }}
+      </div>
+
+   <div class = "form-group">
+      <div class = "col-sm-offset-2 col-sm-10">
+         <button type = "submit" class = "btn btn-default">Upload</button>
+      </div>
+   </div>
+</form>
+{% endblock %}
