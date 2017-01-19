@@ -90,12 +90,10 @@ class Document(models.Model):
 class Step(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, default="step_name")
     template_file = models.ForeignKey(Document, related_name='template_step_fluxes', null=True, blank=True)
-    document = models.ForeignKey(Document, related_name='document_step_fluxes', null=True, blank=True, default="")
+    document = models.ForeignKey(Document, related_name='document_step_fluxes', null=True, blank=True, default=None)
 
     def is_template_instance(self):
-        if self.template_file is None or self.template_file.strip() == "":
-            return True
-        return False
+        return self.template_file is None or self.template_file.strip() == ""
 
     def get_template_link(self):
         if self.template_file.docfile:
@@ -113,9 +111,9 @@ class Step(models.Model):
 
 class FluxModel(models.Model):
     title = models.CharField(max_length=100, null=False, blank=False, default="flux_name")
-    steps = models.ForeignKey(Step, related_name='in_model_fluxes', null=False, blank=False)
-    acceptance_criteria = models.ForeignKey(User, related_name='flux_models', null=True, blank=True)
-    groups = models.ForeignKey(Group, related_name='visible_flux')
+    steps = models.ManyToManyField(Step, related_name='in_model_fluxes', blank=False)
+    acceptance_criteria = models.ManyToManyField(User, related_name='flux_models', blank=True)
+    groups = models.ManyToManyField(Group, related_name='visible_flux')
     days_until_stale = models.IntegerField(null=False, blank=False, default=30)
 
     def __str__(self):
@@ -123,9 +121,10 @@ class FluxModel(models.Model):
 
 
 class FluxInstance(models.Model):
-    flux_parent = models.ForeignKey(FluxModel, on_delete=models.CASCADE, related_name='instances', null=False, blank=False)
-    steps = models.ForeignKey(Step, related_name='in_instance_fluxes', null=True, blank=True, default='')
-    accepted_by = models.ForeignKey(User, related_name='accepted_flux', null=True, blank=True, default='')
+    flux_parent = models.ForeignKey(FluxModel, on_delete=models.CASCADE, related_name='instances', null=False,
+                                    blank=False)
+    steps = models.ManyToManyField(Step, related_name='in_instance_fluxes', blank=True, default=None)
+    accepted_by = models.ManyToManyField(User, related_name='accepted_flux', blank=True, default=None)
     created_on = models.DateTimeField(null=False, blank=False, default=now)
     initiated_by = models.ForeignKey(User, blank=False, null=False)
     status = models.IntegerField(choices=FluxStatus.CHOICES, default=FluxStatus.PENDING)
