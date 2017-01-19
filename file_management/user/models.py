@@ -1,12 +1,21 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.db.models import signals
-
+from documents.models import FluxInstance
 from user.constants import UserRoles
 
 
-class UserProfile(models.Model):
+class Notification(models.Model):
+    from_user = models.ForeignKey(User, related_name='sent_notifications', null=True, blank=True)
+    to_user = models.ForeignKey(User, related_name='received_notifications', null=True, blank=True)
+    flux = models.ForeignKey(FluxInstance, related_name='messages', null=True, blank=True)
+    message = models.CharField(max_length=300, null=False, blank=False, default="")
 
+    def __str__(self):
+        return "from: {}, to: {}, message: {}".format(self.from_user, self.to_user, self.message)
+
+
+class UserProfile(models.Model):
     user = models.OneToOneField(User, primary_key=True, on_delete=models.CASCADE, related_name='profile')
     role = models.IntegerField(default=1, choices=UserRoles.USER_GROUPS_CHOICES)
 
@@ -18,5 +27,6 @@ def create_user_profile(sender, instance, signal, created, **kwargs):
     if created:
         user_profile, _ = UserProfile.objects.get_or_create(user=instance)
         user_profile.save()
+
 
 signals.post_save.connect(create_user_profile, User)

@@ -92,7 +92,7 @@ class Document(models.Model):
 class Step(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, default="step_name")
     template_file = models.ForeignKey(Template, related_name='template_step_fluxes', null=True, blank=True)
-    document = models.ForeignKey(Document, related_name='document_step_fluxes', null=True, blank=True, default=None)
+    document = models.ForeignKey(Document, related_name='document_step_fluxes', null=True, blank=True)
 
     def is_template_instance(self):
         return self.template_file is None or self.template_file.strip() == ""
