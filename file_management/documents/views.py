@@ -38,8 +38,8 @@ def workspace(request):
         form = DocumentForm()  # A empty, unbound form
 
     # Load documents for the list page
-    #todo: keep only docs that are not in fluxes
-    documents = Document.objects.all()
+    # status 0 means draft
+    documents = Document.objects.filter(status=0, author=request.user)
     items, item_ids = [], []
     for item in documents:
         if item.filename not in item_ids:

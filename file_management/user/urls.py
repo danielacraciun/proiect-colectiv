@@ -9,8 +9,7 @@ from user.views import (
 
 
 urlpatterns = [
-    url(r'^$', RedirectView.as_view(pattern_name='home', permanent=False), name='base_home'),
-    url(r'^home/$', HomeView.as_view(), name='home'),
+    url(r'^home/$', RedirectView.as_view(pattern_name='workspace', permanent=False), name='home'),
     url(r'^profile/$', ProfileView.as_view(), name='user_profile'),
     url(r'^login/$', AuthLoginView.as_view(), name='auth_login'),
     url(r'^logout/$', AuthLogoutView.as_view(), name='auth_logout'),
