@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^(?P<pk>\d+)/remove', views.DocumentRemoveView.as_view(), name='remove_document'),
     url(r'^(?P<pk>\d+)/download', ObjectDownloadView.as_view(
         model=models.Document, file_field='docfile'), name='download'),
+    url(r'^(?P<pk>\d+)/make_final', views.make_final, name='make_final'),
 ]
