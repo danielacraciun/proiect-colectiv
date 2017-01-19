@@ -5,6 +5,8 @@ from django.contrib.auth.models import User, Group
 from django.db import models
 from django.utils.timezone import now
 
+from templateuri.models import Template
+
 """
 DRAFT – prima versiune de document de tip draft va fi 0.1. Draft-urile urmatoare vor primi
 versiuni incrementate cu 0.1 (ex. 0.2, 0.3, ....., 0.12). Documentele de tip draft nu pot putea fi
@@ -89,7 +91,7 @@ class Document(models.Model):
 
 class Step(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, default="step_name")
-    template_file = models.ForeignKey(Document, related_name='template_step_fluxes', null=True, blank=True)
+    template_file = models.ForeignKey(Template, related_name='template_step_fluxes', null=True, blank=True)
     document = models.ForeignKey(Document, related_name='document_step_fluxes', null=True, blank=True, default=None)
 
     def is_template_instance(self):
