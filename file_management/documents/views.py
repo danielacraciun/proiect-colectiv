@@ -21,7 +21,7 @@ def workspace(request):
             origname = request.FILES['docfile'].name
             existing = []
             for item in existing_versioned:
-                if origname.startswith(item.filename.split(".")[0]):
+                if item.filename and origname.startswith(item.filename.split(".")[0]):
                     existing.append(item)
             newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                               filename=request.FILES['docfile'].name)
@@ -48,6 +48,7 @@ def workspace(request):
                 newdoc.version = existing[0].version + 0.1
                 newdoc.save()
             elif not existing:
+                import pudb; pu.db
                 newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                                   filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1

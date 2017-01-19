@@ -135,5 +135,5 @@ AUTH_PROFILE_MODULE = 'user.UserProfile'
 
 LOGIN_URL = '/user/login/'
 
-MEDIA_ROOT = '/home/dana/PC/proiect-colectiv/file_management/files'
+MEDIA_ROOT = 'file_management/files'
 MEDIA_ROOT_URL = '/files'
