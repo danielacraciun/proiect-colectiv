@@ -8,18 +8,20 @@
 <table class="table table-striped">
         <thead>
             <tr>
-                <th>Author</th>
-                <th>Version</th>
+                <th>Autor</th>
+                <th>Versiune</th>
                 <th>Status</th>
-                <th>Signed</th>
+                <th>Semnat</th>
                 {% if request.user.profile.role > 1 %}
-                <th>Delete</th>
+                <th>Stergere</th>
                 {% endif %}
-                <th>Download</th>
+                <th>Descarcare</th>
+                <th>Marcare final?</th>
             </tr>
         </thead>
         <tbody>
         {% for req in documents %}
+            {% if req.author == request.user and req.status < 3 %}
             <tr>
                 <td> {{ req.author }}</td>
                 <td> {{ req.version|floatformat:2 }}</td>
@@ -38,11 +40,25 @@
               <td>
                 <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=req.id %}"
                  title="Download document">
-                <span class="glyphicon glyphicon-download" aria-hidden="true"></span></td>
+                <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                </a>
+              </td>
+              <td>
+                 {% if req.status == 0 %}
+                <a class="btn btn-m btn-default btn-icon" href="{% url 'make_final' pk=req.id %}"
+                 title="Make document final">
+                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                    {% else %}
+                        Document incompatibil.
+                    {% endif %}
+                </a>
+              </td>
             </tr>
+            {% endif %}
         {% endfor %}
         </tbody>
 </table>
+<p><small>Marcarea unui document ca si FINAL il face disponibil pt adaugare in fluxuri.</small></p>
 {% else %}
   <p>No documents uploaded yet.</p>
 {% endif %}
