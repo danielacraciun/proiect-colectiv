@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+{% if request.user.profile.role > 1 %}
+<form action="{% url 'template_list' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>{{ form.non_field_errors }}</p>
+    <p>
+        Upload a template:
+        {{ form.docfile.help_text }}
+        {{ form.docfile.errors }}
+        {{ form.docfile }}
+    </p>
+    <p><input type="submit" value="Upload" /></p>
+</form>
+<hr />
+{% else %}
+{% endif %}
+{% if templates %}
+<h1> Templates </h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Created on</th>
+            <th>File type</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in templates %}
+        <tr>
+            <td> {{ req.filename }} </td>
+            <td> {{ req.created_on }} </td>
+            <td> {{ req.filetype }} </td>
+            <td>
+                <a class="btn btn-m btn-default btn-icon" href="{% url 'download_template' pk=req.id %}"
+                   title="Download template">
+                    <span class="glyphicon glyphicon-download" aria-hidden="true"></span>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No templates uploaded yet.</p>
+{% endif %}
+
+{% endblock %}

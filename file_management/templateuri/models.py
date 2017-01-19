@@ -10,3 +10,13 @@ class Template(models.Model):
     created_on = models.DateTimeField(blank=False, default=now)
     fields = models.CharField(max_length=2500, null=False, blank=False)
     filetype = models.CharField(max_length=100, null=False, blank=False)
+
+
+    def __str__(self):
+        return '{}'.format(self.filename)
+
+    def file_link(self):
+        if self.docfile:
+            return "<a download href='%s'>download</a>" % (self.docfile.url,)
+        else:
+            return "No attachment"
