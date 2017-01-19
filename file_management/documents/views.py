@@ -1,13 +1,11 @@
+from django.core.urlresolvers import reverse, reverse_lazy
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView
-from django.template import RequestContext
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse, reverse_lazy
-from django.utils.timezone import now
-
-from documents.models import Document
 from documents.forms import DocumentForm
+from documents.models import Document
 from documents.utils import check_integrity
+
 
 # to do: add management commnd that deletes docs after 30 days
 
@@ -22,7 +20,8 @@ def workspace(request):
             for item in existing_versioned:
                 if origname.startswith(item.filename.split(".")[0]) and check_integrity(origname):
                     existing.append(item)
-            newdoc = Document(docfile=request.FILES['docfile'], author=request.user, filename=request.FILES['docfile'].name)
+            newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
+                              filename=request.FILES['docfile'].name)
             if existing:
                 newdoc.filename = existing[0].filename
                 newdoc.version = existing[0].get_next_version()
@@ -38,8 +37,8 @@ def workspace(request):
         form = DocumentForm()  # A empty, unbound form
 
     # Load documents for the list page
-    #todo: keep only docs that are not in fluxes
-    documents = Document.objects.all()
+    # status 0 means draft
+    documents = Document.objects.filter(status=0, author=request.user)
     items, item_ids = [], []
     for item in documents:
         if item.filename not in item_ids:
@@ -53,6 +52,7 @@ def workspace(request):
         {'documents': items, 'form': form}
     )
 
+
 class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
@@ -63,7 +63,7 @@ class InitiatedTasks(TemplateView):
 
 
 class CurrentTasks(TemplateView):
-    #requiring action fluxes
+    # requiring action fluxes
     template_name = 'tasks.html'
 
     def get_context_data(self, **kwargs):

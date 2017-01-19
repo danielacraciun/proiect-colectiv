@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from django.views.generic import RedirectView
 from django_downloadview import ObjectDownloadView
 from documents import views, models
 

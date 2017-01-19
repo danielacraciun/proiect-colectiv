@@ -1,17 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 {% if request.user.profile.role > 1 %}
-<form action="{% url 'workspace' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <p>{{ form.non_field_errors }}</p>
-  <p>
-    Upload a document:
-    {{ form.docfile.help_text }}
-    {{ form.docfile.errors }}
-    {{ form.docfile }}
-  </p>
-  <p><input type="submit" value="Upload" /></p>
-</form>
+<div class="panel panel-default">
+   <div class="panel-heading">
+       <h3 class="panel-title">Incarcare document</h3>
+   </div>
+  <div class="panel-body">
+
+      <form action="{% url 'workspace' %}" method="post" enctype="multipart/form-data" class="form-horizontal" role = "form">
+          {% csrf_token %}
+          <p>{{ form.non_field_errors }}
+             {{ form.docfile.help_text }}
+            {{ form.docfile.errors }}</p>
+          <p>
+            Document:
+            {{ form.docfile }} <br />
+            Descriere:
+            <br /> {{ form.abstract }} <br />
+            Cuvinte cheie:
+            <br /> {{ form.keywords }} <br />
+          </p>
+
+          <button type="submit" class="btn btn-default">Submit</button>
+    </form>
+
+
+  </div>
+</div>
+
 <hr />
 {% else %}
 {% endif %}
