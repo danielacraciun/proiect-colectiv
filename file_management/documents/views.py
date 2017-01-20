@@ -5,8 +5,7 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
-from documents.models import Document
-
+from documents.models import Document, FluxInstance, FluxStatus
 
 # to do: add management commnd that deletes docs after 30 days
 from user.models import Notification
@@ -89,8 +88,13 @@ class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING);
+        return tasks
+
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
+        context['fluxes'] = self.get_queryset()
         return context
 
 
@@ -98,8 +102,13 @@ class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(accepted_by=self.request.user).distinct();
+        return tasks
+
     def get_context_data(self, **kwargs):
-        context = super(CurrentTasks, self).get_context_data()
+        context = super(CurrentTasks, self).get_context_data(**kwargs)
+        context['fluxes'] = self.get_queryset()
         return context
 
 
@@ -107,8 +116,13 @@ class FinishedTasks(TemplateView):
     # finished fluxes and docs
     template_name = 'fin_tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING);
+        return tasks
+
     def get_context_data(self, **kwargs):
         context = super(FinishedTasks, self).get_context_data()
+        context['fluxes'] = self.get_queryset()
         return context
 
 
