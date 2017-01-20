@@ -9,6 +9,8 @@ from documents.models import Document
 
 
 # to do: add management commnd that deletes docs after 30 days
+from user.models import Notification
+
 
 def workspace(request):
     # Handle file upload
@@ -72,6 +74,15 @@ def workspace(request):
         'documents.html',
         {'documents': items, 'form': form}
     )
+
+
+class Notifications(TemplateView):
+    template_name = 'notifications.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(Notifications, self).get_context_data()
+        context['notifications'] = Notification.objects.filter(to_user=self.request.user)
+        return context
 
 
 class InitiatedTasks(TemplateView):
