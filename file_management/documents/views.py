@@ -3,16 +3,16 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
+
+from documents.forms import DocumentForm, DocChoice
+
 from django.views.generic import CreateView
-from django.views.generic import FormView
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
-from documents.models import Document, FluxInstance, FluxStatus
+from documents.models import Document, FluxInstance, FluxStatus, Step
 
 # to do: add management commnd that deletes docs after 30 days
 from user.models import Notification
-
-from documents.forms import FluxModelForm
 
 from documents.models import FluxModel
 
@@ -106,16 +106,37 @@ class Notifications(TemplateView):
 class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
+    model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING);
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING)
         return tasks
 
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
-        context['fluxes'] = self.get_queryset()
+        context['object_list'] = self.get_queryset()
         return context
 
+
+def flux_detail(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
+    else:
+        form = DocChoice()  # A empty, unbound form
+    return render(
+        request,
+        'flux_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form}
+    )
 
 class CurrentTasks(TemplateView):
     # requiring action fluxes
