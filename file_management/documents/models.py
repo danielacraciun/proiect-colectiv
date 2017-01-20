@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.forms import ModelForm
 from django.utils.timezone import now
 
 from templateuri.models import Template
@@ -120,6 +121,18 @@ class FluxModel(models.Model):
 
     def __str__(self):
         return '{}'.format(self.title, )
+
+
+class StepForm(ModelForm):
+    class Meta:
+        model = Step
+        fields = ['name', 'template_file']
+
+
+class FluxModelForm(ModelForm):
+    class Meta:
+        model = FluxModel
+        fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
 
 
 class FluxInstance(models.Model):

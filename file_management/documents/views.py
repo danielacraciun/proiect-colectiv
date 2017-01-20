@@ -3,12 +3,18 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.views.generic import CreateView
+from django.views.generic import FormView
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
 from documents.models import Document, FluxInstance, FluxStatus
 
 # to do: add management commnd that deletes docs after 30 days
 from user.models import Notification
+
+from documents.forms import FluxModelForm
+
+from documents.models import FluxModel
 
 
 def workspace(request):
@@ -75,13 +81,17 @@ def workspace(request):
     )
 
 
-class CreateFlow(TemplateView):
+class CreateFlow(CreateView):
     template_name = 'create_flow.html'
+    # form_class = FluxModelForm
+    model = FluxModel
+    fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
+    success_url = reverse_lazy('workspace')
 
-    def get_context_data(self, **kwargs):
-        context = super(CreateFlow, self).get_context_data()
-        context['create_flow'] = Notification.objects.filter(to_user=self.request.user)
-        return context
+    # def get_context_data(self, **kwargs):
+    #     context = super(CreateFlow, self).get_context_data()
+    #     context['create_flow'] = Notification.objects.filter(to_user=self.request.user)
+    #     return context
 
 
 class Notifications(TemplateView):
