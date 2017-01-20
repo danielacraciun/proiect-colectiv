@@ -79,8 +79,13 @@ class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING);
+        return tasks
+
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
+        context['fluxes'] = self.get_queryset()
         return context
 
 
@@ -89,7 +94,7 @@ class CurrentTasks(TemplateView):
     template_name = 'tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.all();
+        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(accepted_by=self.request.user).distinct();
         return tasks
 
     def get_context_data(self, **kwargs):
@@ -103,7 +108,7 @@ class FinishedTasks(TemplateView):
     template_name = 'fin_tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.exclude(status=FluxStatus.PENDING);
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING);
         return tasks
 
     def get_context_data(self, **kwargs):
