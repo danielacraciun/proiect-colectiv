@@ -5,7 +5,8 @@ from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
-from documents.models import Document
+from documents.models import Document, FluxInstance, FluxStatus
+from django.db.models import Q
 
 
 # to do: add management commnd that deletes docs after 30 days
@@ -87,8 +88,13 @@ class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.all();
+        return tasks
+
     def get_context_data(self, **kwargs):
-        context = super(CurrentTasks, self).get_context_data()
+        context = super(CurrentTasks, self).get_context_data(**kwargs)
+        context['fluxes'] = self.get_queryset()
         return context
 
 
@@ -96,8 +102,13 @@ class FinishedTasks(TemplateView):
     # finished fluxes and docs
     template_name = 'fin_tasks.html'
 
+    def get_queryset(self):
+        tasks = FluxInstance.objects.exclude(status=FluxStatus.PENDING);
+        return tasks
+
     def get_context_data(self, **kwargs):
         context = super(FinishedTasks, self).get_context_data()
+        context['fluxes'] = self.get_queryset()
         return context
 
 
