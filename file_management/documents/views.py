@@ -6,8 +6,6 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
 from documents.models import Document, FluxInstance, FluxStatus
-from django.db.models import Q
-
 
 # to do: add management commnd that deletes docs after 30 days
 
