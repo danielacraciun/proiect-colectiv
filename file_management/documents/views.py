@@ -1,13 +1,11 @@
-from django.contrib import messages
-from django.http import Http404
-from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.http import Http404
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
 from documents.models import Document
-from documents.utils import check_integrity
 
 
 # to do: add management commnd that deletes docs after 30 days
@@ -48,7 +46,6 @@ def workspace(request):
                 newdoc.version = existing[0].version + 0.1
                 newdoc.save()
             elif not existing:
-                import pudb; pu.db
                 newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                                   filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1
