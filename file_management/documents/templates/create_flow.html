@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+{% if create_flow %}
+<h1> Create Flow </h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>From:</th>
+            <th>On Flux:</th>
+            <th>Message:</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in create_flow %}
+        <tr>
+            <td> {{ req.from_user.email }} </td>
+            <td> {{ req.flux }} </td>
+            <td> {{ req.message }} </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Something went Wrong</p>
+{% endif %}
+
+{% endblock %}

@@ -76,6 +76,15 @@ def workspace(request):
     )
 
 
+class CreateFlow(TemplateView):
+    template_name = 'create_flow.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(CreateFlow, self).get_context_data()
+        context['create_flow'] = Notification.objects.filter(to_user=self.request.user)
+        return context
+
+
 class Notifications(TemplateView):
     template_name = 'notifications.html'
 

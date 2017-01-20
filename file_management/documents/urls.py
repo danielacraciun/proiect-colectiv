@@ -4,6 +4,7 @@ from documents import views, models
 
 urlpatterns = [
     url(r'^workspace/$', views.workspace, name='workspace'),
+    url(r'^create_flow/$', views.CreateFlow.as_view(), name='create_flow'),
     url(r'^init_tasks/$', views.InitiatedTasks.as_view(), name='init_tasks'),
     url(r'^current_tasks/$', views.CurrentTasks.as_view(), name='current_tasks'),
     url(r'^fin_tasks/$', views.FinishedTasks.as_view(), name='fin_tasks'),
