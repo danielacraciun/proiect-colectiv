@@ -12,7 +12,7 @@ from documents.utils import check_integrity
 
 from django.views.generic import TemplateView, DetailView, DeleteView
 from documents.forms import DocumentForm
-from documents.models import Document, FluxInstance, FluxStatus
+from documents.models import Document, FluxInstance, FluxStatus, Step
 
 # to do: add management commnd that deletes docs after 30 days
 from user.models import Notification
@@ -97,12 +97,12 @@ class InitiatedTasks(TemplateView):
     model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING);
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING)
         return tasks
 
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
-        context['fluxes'] = self.get_queryset()
+        context['object_list'] = self.get_queryset()
         return context
 
 
