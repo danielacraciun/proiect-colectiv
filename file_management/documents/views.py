@@ -5,12 +5,15 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic import TemplateView, DetailView, DeleteView, ListView
-from documents.forms import DocumentForm
+from django.views.generic.edit import FormMixin, ProcessFormView
+from documents.forms import DocumentForm, DocChoice
 from documents.models import Document, FluxInstance
 from documents.utils import check_integrity
 
 
 # to do: add management commnd that deletes docs after 30 days
+from documents.models import Step
+
 
 def workspace(request):
     # Handle file upload
@@ -87,14 +90,26 @@ class InitiatedTasks(TemplateView):
         context['object_list'] = FluxInstance.objects.filter(initiated_by=self.request.user)
         return context
 
-class FluxDetailView(DetailView):
-    template_name = 'flux_detail.html'
-    model = FluxInstance
 
-    def get_context_data(self, **kwargs):
-        context = super(FluxDetailView, self).get_context_data()
-        context['obj'] = FluxInstance.objects.filter(pk=self.kwargs.get(self.pk_url_kwarg)).first()
-        return context
+def flux_detail(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
+    else:
+        form = DocChoice()  # A empty, unbound form
+    return render(
+        request,
+        'flux_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form}
+    )
 
 class CurrentTasks(TemplateView):
     # requiring action fluxes
