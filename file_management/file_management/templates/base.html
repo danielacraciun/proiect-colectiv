@@ -1,10 +1,13 @@
+{% load static %}
 <html>
 <head>
     <!--self-hosted-static-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <!--project-static-->
     {% block static_css %}
+
     {% endblock %}
 
     <!--meta-tags-->
@@ -12,7 +15,7 @@
 
     <!-- scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-
+<script type="text/javascript" src="{% static 'js/scripts.js' %}"></script>
     {%  block additional_head_content %}
     {%  endblock %}
 

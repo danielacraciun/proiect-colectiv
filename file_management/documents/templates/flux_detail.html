@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+ <div class="col-md-10">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ obj.flux_parent.title}}</h3>
+        </div>
+        <div class="panel-body">
+            <strong>Pasii necesari:</strong> <br />
+
+            <ul class="list-group">
+                {% for step in obj.steps.all %}
+                    <li class="list-group-item">{{ step.name }}</li>
+                {% endfor %}
+            </ul>
+            <strong>Nevoie de aprobare de la:</strong> <br />
+            <ul class="list-group">
+                {% for usr in obj.flux_parent.acceptance_criteria.all %}
+                    <li class="list-group-item">
+                            {% if usr.get_full_name %}
+                                {{ usr.get_full_name }}
+                            {% else %}
+                                {{ usr.username }}
+                            {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div><br />
+{% endblock %}
+
+
+

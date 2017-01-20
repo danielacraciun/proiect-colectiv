@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from django.views.generic import TemplateView, DetailView, DeleteView
+from django.views.generic import TemplateView, DetailView, DeleteView, ListView
 from documents.forms import DocumentForm
-from documents.models import Document
+from documents.models import Document, FluxInstance
 from documents.utils import check_integrity
 
 
@@ -80,11 +80,21 @@ def workspace(request):
 class InitiatedTasks(TemplateView):
     # all fluxes
     template_name = 'init_tasks.html'
+    model = FluxInstance
 
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
+        context['object_list'] = FluxInstance.objects.filter(initiated_by=self.request.user)
         return context
 
+class FluxDetailView(DetailView):
+    template_name = 'flux_detail.html'
+    model = FluxInstance
+
+    def get_context_data(self, **kwargs):
+        context = super(FluxDetailView, self).get_context_data()
+        context['obj'] = FluxInstance.objects.filter(pk=self.kwargs.get(self.pk_url_kwarg)).first()
+        return context
 
 class CurrentTasks(TemplateView):
     # requiring action fluxes
