@@ -144,6 +144,16 @@ class FluxInstance(models.Model):
     initiated_by = models.ForeignKey(User, blank=False, null=False)
     status = models.IntegerField(choices=FluxStatus.CHOICES, default=FluxStatus.PENDING)
 
+    def save(self, *args, **kwargs):
+        import pudb; pu.db
+        if self.status in [1, 2]:
+            for step in self.steps.all():
+                # block ALL the documents
+                doc = step.document
+                doc.status = 3
+                doc.save()
+        super(FluxInstance, self).save(*args, **kwargs)
+
     def is_accepted(self):
         return set(self.accepted_by.all()).issubset(set(self.flux_parent.acceptance_criteria.all()))
 
