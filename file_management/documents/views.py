@@ -141,7 +141,8 @@ def flux_detail(request, pk):
         s.save()
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
-        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename', 'version'))
+        user_choices = [(idx, filename + ": version %.2f" % version) for idx, filename, version in user_choices]
         fields = {'doc_choice': ChoiceField(choices=user_choices)}
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
         form = MyForm()
