@@ -15,6 +15,7 @@ from documents.models import Document, FluxInstance, FluxStatus, Step
 from documents.models import FluxModel
 from templateuri.models import Template
 from user.models import Notification
+from django.db.models import Q
 
 
 def workspace(request):
@@ -208,9 +209,14 @@ class FinishedTasks(TemplateView):
     model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(
-            status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
-        return tasks
+        to_show_id = []
+        tasks = FluxInstance.objects.filter(status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
+        for task in tasks:
+            if task.initiated_by.id == self.request.user.id:
+                to_show_id.append(task.id)
+            elif self.request.user in task.flux_parent.acceptance_criteria.all():
+                to_show_id.append(task.id)
+        return FluxInstance.objects.filter(id__in=to_show_id)
 
     def get_context_data(self, **kwargs):
         context = super(FinishedTasks, self).get_context_data()
