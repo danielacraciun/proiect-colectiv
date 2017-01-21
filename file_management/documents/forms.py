@@ -1,9 +1,6 @@
 from django import forms
-from django.contrib.auth.models import User, Group
-from django.db import OperationalError
 
-from documents.models import Document
-from templateuri.models import Template
+from documents.models import FluxModel
 
 
 class DocumentForm(forms.Form):
@@ -15,6 +12,15 @@ class DocumentForm(forms.Form):
 class DocChoice(forms.Form):
     doc_choice = forms.ChoiceField(choices=[])
     orig_id = forms.IntegerField()
+
+
+class FluxInstanceForm(forms.Form):
+    flux_model_select = forms.ModelChoiceField(queryset=FluxModel.objects.order_by('title').all())
+
+
+class FluxCompletionForm(forms.Form):
+    numsteps = forms.IntegerField()
+
 
 class StepCreate(forms.Form):
     title = forms.CharField(max_length=100)

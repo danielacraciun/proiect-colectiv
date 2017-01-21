@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.forms import IntegerField, HiddenInput
 from django.forms import ModelForm, ChoiceField, BaseForm, CharField
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -9,6 +10,7 @@ from django.views.generic import TemplateView, DetailView, DeleteView
 
 from documents.forms import DocChoice, StepCreate
 from documents.forms import DocumentForm
+from documents.forms import FluxInstanceForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
 from documents.models import FluxModel
 from templateuri.models import Template
@@ -127,6 +129,7 @@ class InitiatedTasks(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
         context['object_list'] = self.get_queryset()
+        context['form'] = FluxInstanceForm
         return context
 
 
@@ -205,7 +208,8 @@ class FinishedTasks(TemplateView):
     model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(
+            status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
         return tasks
 
     def get_context_data(self, **kwargs):
@@ -320,3 +324,47 @@ def review_flux(request, pk):
         {'obj': FluxInstance.objects.filter(pk=pk).first(),
          'docs': Document.objects.filter(author=request.user),
          'form': form})
+
+
+def new_flux(request, pk=None):
+    if request.method == 'POST':
+        obj = FluxInstance.objects.get(id=pk)
+        for i, step in enumerate(obj.steps.all()):
+            new_doc_id = request.POST['doc_choice_{}'.format(i)]
+            step_id = request.POST['orig_id_{}'.format(i)]
+            s = Step.objects.get(id=step_id)
+            s.document = Document.objects.get(id=new_doc_id)
+            s.save()
+
+        return HttpResponseRedirect(reverse_lazy('init_tasks'))
+    else:
+        flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
+        obj = FluxInstance(flux_parent=FluxModel.objects.filter(id=request.GET['flux_model_select']).first(),
+                           initiated_by=request.user)
+        obj.save()
+
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {"numsteps": IntegerField(widget=HiddenInput(), initial=len(list(flux_model.steps.all())))}
+
+        for i, step in enumerate(flux_model.steps.all()):
+            step.id = None
+            step.save()
+            obj.steps.add(Step.objects.latest('id'))
+            fields.update({'doc_choice_{}'.format(i): ChoiceField(choices=user_choices)})
+            fields.update({'orig_id_{}'.format(i): IntegerField(widget=HiddenInput(), initial=step.id)})
+
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+
+        print(request.GET['flux_model_select'])
+        print(obj.flux_parent)
+
+        return render(
+            request,
+            "new_task.html",
+            {
+                'obj': obj,
+                'form': form,
+            }
+        )
