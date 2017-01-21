@@ -16,8 +16,12 @@ from documents.models import FluxModel
 from templateuri.models import Template
 from user.models import Notification
 
+import logging
+
 
 def workspace(request):
+    logger = logging.getLogger('documents')
+
     # Handle file upload
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -57,7 +61,7 @@ def workspace(request):
                                   filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1
                 newdoc.save()
-
+            logger.info('User {} added version {} of Document {}'.format(request.user, newdoc.version, newdoc.filename))
             # Redirect to the document list after POST
             return HttpResponseRedirect(reverse('workspace'))
     else:
@@ -134,6 +138,7 @@ class InitiatedTasks(TemplateView):
 
 
 def flux_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
@@ -142,6 +147,7 @@ def flux_detail(request, pk):
         s = Step.objects.get(id=step_id)
         s.document = Document.objects.get(id=new_doc_id)
         s.save()
+        logger.info('User {} added Document {} for Step {}'.format(request.user, s.document.filename, s.name))
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
         user_choices = list(
@@ -159,6 +165,7 @@ def flux_detail(request, pk):
 
 
 def flux_manage_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
@@ -166,6 +173,7 @@ def flux_manage_detail(request, pk):
         step_id = request.POST['orig']
         s = Step.objects.get(id=step_id)
         s.document = Document.objects.get(id=new_doc_id)
+        logger.info('User {} added Document {} for Step {}'.format(request.user, s.document.filename, s.name))
         s.save()
         return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
     else:
@@ -241,23 +249,30 @@ class DocumentRemoveView(DeleteView):
     object = None
 
     def get_queryset(self):
+        logger = logging.getLogger('documents')
+        logger.info('User {} removed version {} of Document {}'.format(self.request.user, model.version, model.filename))
         return Document.objects.filter(author=self.request.user)
 
 
 def make_final(request, *args, **kwargs):
+    logger = logging.getLogger('documents')
     obj = Document.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find document'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.status = 1
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
+    logger.info('User {} made final Document {}'.format(request.user, obj.filename))
     return redirect('workspace')
 
 
 def accept_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find flux'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.accepted_by.add(request.user)
@@ -265,20 +280,25 @@ def accept_flow(request, *args, **kwargs):
     if set(obj.flux_parent.acceptance_criteria.all()).issubset(obj.accepted_by.all()):
         obj.status = 1
         obj.save()
+    logger.info('User {} accepted Flow {}'.format(request.user, obj.title))
+
     return redirect('current_tasks')
 
 
 def reject_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
         raise Http404()
     obj = obj.first()
     obj.status = 2
     obj.save()
+    logger.info('User {} rejected Flow {}'.format(request.user, obj.title))
     return redirect('current_tasks')
 
 
 def step_create(request):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = StepCreate(request.POST, request.FILES)
@@ -287,6 +307,7 @@ def step_create(request):
         t = Template.objects.get(id=tmp_id)
         s = Step(name=title, template_file=t, document=None)
         s.save()
+        logger.info('User {} added Step {} with Template {}'.format(request.user, s.name, t.filename))
         return HttpResponseRedirect(reverse('create_flow'))
     else:
         user_choices = list(Template.objects.values_list('id', 'filename'))
