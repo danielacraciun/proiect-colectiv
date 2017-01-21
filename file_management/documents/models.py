@@ -132,7 +132,6 @@ class FluxInstance(models.Model):
     status = models.IntegerField(choices=FluxStatus.CHOICES, default=FluxStatus.PENDING)
 
     def save(self, *args, **kwargs):
-        import pudb; pu.db
         if self.status in [1, 2]:
             for step in self.steps.all():
                 # block ALL the documents

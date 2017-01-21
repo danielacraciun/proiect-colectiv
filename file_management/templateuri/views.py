@@ -17,6 +17,7 @@ def template_list(request):
     if request.method == 'POST':
         form = TemplateForm(request.POST, request.FILES)
         if form.is_valid():
+            import pudb; pu.db
             doc = request.FILES['docfile']
             origname = request.FILES['docfile'].name
             newdoc = Template(
