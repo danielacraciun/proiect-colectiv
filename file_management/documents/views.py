@@ -1,20 +1,17 @@
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.forms import ChoiceField, BaseForm, ModelForm, IntegerField, HiddenInput
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.shortcuts import render
-
-from documents.forms import DocumentForm, DocChoice
-
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
-from documents.forms import DocumentForm, FluxInstanceForm
+
+from documents.forms import DocChoice, FluxInstanceForm
+from documents.forms import DocumentForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
-
-# to do: add management commnd that deletes docs after 30 days
-from user.models import Notification
-
 from documents.models import FluxModel
+from user.models import Notification
 
 
 def workspace(request):
@@ -81,17 +78,20 @@ def workspace(request):
     )
 
 
-class CreateFlow(CreateView):
-    template_name = 'create_flow.html'
-    # form_class = FluxModelForm
-    model = FluxModel
-    fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
-    success_url = reverse_lazy('workspace')
+class FluxModelForm(ModelForm):
+    class Meta:
+        model = FluxModel
+        fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
+        widgets = {
 
-    # def get_context_data(self, **kwargs):
-    #     context = super(CreateFlow, self).get_context_data()
-    #     context['create_flow'] = Notification.objects.filter(to_user=self.request.user)
-    #     return context
+        }
+        success_url = reverse_lazy('workspace')
+
+
+class CreateFlow(CreateView):
+    form_class = FluxModelForm
+    model = FluxModel
+    template_name = 'create_flow.html'
 
 
 class Notifications(TemplateView):
@@ -130,7 +130,11 @@ def flux_detail(request, pk):
         s.save()
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
-        form = DocChoice()  # A empty, unbound form
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {'doc_choice': ChoiceField(choices=user_choices)}
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
     return render(
         request,
         'flux_detail.html',
@@ -140,18 +144,57 @@ def flux_detail(request, pk):
     )
 
 
+def flux_manage_detail(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
+    else:
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {'doc_choice': ChoiceField(choices=user_choices)}
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+    return render(
+        request,
+        'flux_manage_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form})
+
+
 class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
+    model = FluxInstance
+
+    # def get_queryset(self):
+    #     tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
+    #         accepted_by=self.request.user).distinct()
+    #     return tasks
+    #
+    # def get_context_data(self, **kwargs):
+    #     context = super(CurrentTasks, self).get_context_data(**kwargs)
+    #     context['fluxes'] = self.get_queryset()
+    #     return context
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
-            accepted_by=self.request.user).distinct();
-        return tasks
+        id_list = []
+        for parent in FluxModel.objects.all():
+            if self.request.user in parent.acceptance_criteria.all():
+                for instance in parent.instances.all():
+                    if self.request.user not in instance.accepted_by.all():
+                        id_list.append(instance.id)
+        return FluxInstance.objects.filter(id__in=id_list)
 
     def get_context_data(self, **kwargs):
-        context = super(CurrentTasks, self).get_context_data(**kwargs)
-        context['fluxes'] = self.get_queryset()
+        context = super(CurrentTasks, self).get_context_data()
+        context['object_list'] = self.get_queryset()
         return context
 
 
@@ -208,37 +251,45 @@ def make_final(request, *args, **kwargs):
 
 
 def new_flux(request, pk=None):
-    if pk:
-        obj = FluxInstance.objects.get(id=pk)
     if request.method == 'POST':
-        form = DocChoice(request.POST, request.FILES)
-        new_doc_id = request.POST['doc_choice']
-        step_id = request.POST['orig']
-        s = Step.objects.get(id=step_id)
-        s.document = Document.objects.get(id=new_doc_id)
-        s.save()
+        obj = FluxInstance.objects.get(id=pk)
+        for i, step in enumerate(obj.steps.all()):
+            new_doc_id = request.POST['doc_choice_{}'.format(i)]
+            step_id = request.POST['orig_id_{}'.format(i)]
+            s = Step.objects.get(id=step_id)
+            s.document = Document.objects.get(id=new_doc_id)
+            s.save()
 
-        # if finish:
         return HttpResponseRedirect(reverse_lazy('init_tasks'))
-        # return HttpResponseRedirect(reverse('new_flux', kwargs={'obj': obj}))
     else:
-        form = DocChoice()
         flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
         obj = FluxInstance(flux_parent=FluxModel.objects.filter(id=request.GET['flux_model_select']).first(),
                            initiated_by=request.user)
         obj.save()
-        print(request.GET['flux_model_select'])
-        print(obj.flux_parent)
-        for step in flux_model.steps.all():
+
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {"numsteps": IntegerField(widget=HiddenInput(), initial=len(list(flux_model.steps.all())))}
+
+        for i, step in enumerate(flux_model.steps.all()):
             step.id = None
             step.save()
             obj.steps.add(Step.objects.latest('id'))
+            fields.update({'doc_choice_{}'.format(i): ChoiceField(choices=user_choices)})
+            fields.update({'orig_id_{}'.format(i): IntegerField(widget=HiddenInput(), initial=step.id)})
 
-    return render(
-        request,
-        "new_task.html",
-        {
-            'obj': obj,
-            'form': form
-        }
-    )
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+
+        print(request.GET['flux_model_select'])
+        print(obj.flux_parent)
+
+
+        return render(
+            request,
+            "new_task.html",
+            {
+                'obj': obj,
+                'form': form,
+            }
+        )
