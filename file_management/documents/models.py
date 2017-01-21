@@ -3,7 +3,6 @@ from datetime import datetime
 
 from django.contrib.auth.models import User, Group
 from django.db import models
-from django.forms import ModelForm
 from django.utils.timezone import now
 
 from templateuri.models import Template
@@ -123,18 +122,6 @@ class FluxModel(models.Model):
         return '{}'.format(self.title, )
 
 
-class StepForm(ModelForm):
-    class Meta:
-        model = Step
-        fields = ['name', 'template_file']
-
-
-class FluxModelForm(ModelForm):
-    class Meta:
-        model = FluxModel
-        fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
-
-
 class FluxInstance(models.Model):
     flux_parent = models.ForeignKey(FluxModel, on_delete=models.CASCADE, related_name='instances', null=False,
                                     blank=False)
@@ -145,7 +132,6 @@ class FluxInstance(models.Model):
     status = models.IntegerField(choices=FluxStatus.CHOICES, default=FluxStatus.PENDING)
 
     def save(self, *args, **kwargs):
-        import pudb; pu.db
         if self.status in [1, 2]:
             for step in self.steps.all():
                 # block ALL the documents
