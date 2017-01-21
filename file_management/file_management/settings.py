@@ -147,3 +147,45 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(PROJECT_DIR, 'staticfiles'),
 )
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'dbhandler': {
+            'level': 'INFO',
+            'class': 'file_management.log_handlers.SQLiteHandler',
+        },
+    },
+    'filters': {
+        'userAndDocumentFilter': {
+            '()': 'file_management.log_filters.UserAndDocumentFilter',
+        },
+    },
+    'loggers': {
+        'documents': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'users': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'flows': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'templates': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
