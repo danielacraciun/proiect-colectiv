@@ -139,18 +139,47 @@ def flux_detail(request, pk):
     )
 
 
+def flux_manage_detail(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
+    else:
+        form = DocChoice()  # A empty, unbound form
+    return render(
+        request,
+        'flux_manage_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form})
+
+
 class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
+    model = FluxInstance
+    # def get_queryset(self):
+    #     tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
+    #         accepted_by=self.request.user).distinct()
+    #     return tasks
+    #
+    # def get_context_data(self, **kwargs):
+    #     context = super(CurrentTasks, self).get_context_data(**kwargs)
+    #     context['fluxes'] = self.get_queryset()
+    #     return context
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
-            accepted_by=self.request.user).distinct();
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING)
         return tasks
 
     def get_context_data(self, **kwargs):
-        context = super(CurrentTasks, self).get_context_data(**kwargs)
-        context['fluxes'] = self.get_queryset()
+        context = super(CurrentTasks, self).get_context_data()
+        context['object_list'] = self.get_queryset()
         return context
 
 
