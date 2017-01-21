@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User, Group
+from django.db import OperationalError
 
 from templateuri.models import Template
 
@@ -12,7 +13,10 @@ class DocumentForm(forms.Form):
     keywords = forms.CharField(max_length=100, help_text='Separated by spaces.')
 
 class DocChoice(forms.Form):
-    doc_choice = forms.ChoiceField(choices=Document.objects.values_list('id', 'filename'))
+    try:
+        doc_choice = forms.ChoiceField(choices=Document.objects.values_list('id', 'filename'))
+    except OperationalError:
+        doc_choice = forms.ChoiceField(choices=[])
     orig_id = forms.IntegerField()
 
 
