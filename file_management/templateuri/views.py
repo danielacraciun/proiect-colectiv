@@ -9,15 +9,16 @@ from django.utils.timezone import now
 from templateuri.forms import TemplateForm
 from templateuri.models import Template
 
+import logging
+
 def generate_filetype(filename):
     return "." + filename.split(".")[1]
 
 def template_list(request):
-
+    logger = logging.getLogger('templates')
     if request.method == 'POST':
         form = TemplateForm(request.POST, request.FILES)
         if form.is_valid():
-            import pudb; pu.db
             doc = request.FILES['docfile']
             origname = request.FILES['docfile'].name
             newdoc = Template(
@@ -25,6 +26,7 @@ def template_list(request):
                 filetype=generate_filetype(origname))
             newdoc.save()
 
+            logger.info('User {} added Template {}'.format(request.user, newdoc.filename))
             # Redirect to the document list after POST
             return HttpResponseRedirect(reverse('template_list'))
     else:
