@@ -5,13 +5,17 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.utils.timezone import now
 
+import logging
+
 from documents.models import Document
 from documents.forms import DocumentForm
 from documents.utils import check_integrity
+from file_management.log_filters import UserAndDocumentFilter
 
 # to do: add management commnd that deletes docs after 30 days
 
 def workspace(request):
+    logger = logging.getLogger('documents')
     # Handle file upload
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -29,7 +33,9 @@ def workspace(request):
                 for existing_doc in existing:
                     existing_doc.last_modified = newdoc.last_modified
                     existing_doc.stale = False
+                    logger.info('User {} added version {} of Document {}'.format(request.user, newdoc.version, newdoc.filename))
                     existing_doc.save()
+            logger.info('User {} added Document {}'.format(request.user, newdoc.filename))
             newdoc.save()
 
             # Redirect to the document list after POST
@@ -39,6 +45,7 @@ def workspace(request):
 
     # Load documents for the list page
     #todo: keep only docs that are not in fluxes
+    logger.info('User {} checked Document'.format(request.user))
     documents = Document.objects.all()
     items, item_ids = [], []
     for item in documents:
@@ -103,4 +110,6 @@ class DocumentRemoveView(DeleteView):
     object = None
 
     def get_queryset(self):
+        logger = logging.getLogger('documents')
+        logger.info('User {} removed version {} of Document {}'.format(self.request.user, model.version, model.filename))
         return Document.objects.filter(author=self.request.user)

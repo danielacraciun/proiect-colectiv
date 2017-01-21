@@ -136,3 +136,33 @@ LOGIN_URL = '/user/login/'
 
 MEDIA_ROOT = '/home/dana/PC/proiect-colectiv/file_management/files'
 MEDIA_ROOT_URL = '/files'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'dbhandler': {
+            'level': 'INFO',
+            'class': 'file_management.log_handlers.SQLiteHandler',
+        },
+    },
+    'filters': {
+        'userAndDocumentFilter': {
+            '()': 'file_management.log_filters.UserAndDocumentFilter',
+        },
+    },
+    'loggers': {
+        'documents': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'users': {
+            'handlers': ['dbhandler'],
+            'filters': ['userAndDocumentFilter'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

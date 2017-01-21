@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.views.generic import FormView, RedirectView, TemplateView, UpdateView
 from django.shortcuts import get_object_or_404, redirect
 
+import logging
+
 from user.forms import LoginForm
 from user.models import UserProfile
 
@@ -26,6 +28,8 @@ class AuthLoginView(FormView):
     form_class = LoginForm
 
     def form_valid(self, form):
+        logger = logging.getLogger('users')
+        logger.info('User {} logged in'.format(form.fields['user']))
         login(self.request, form.fields['user'])
         return super(AuthLoginView, self).form_valid(form)
 
@@ -43,5 +47,7 @@ class AuthLogoutView(RedirectView):
 
     def get_redirect_url(self, *args, **kwargs):
         if self.request.user.is_authenticated():
+            logger = logging.getLogger('users')
+            logger.info('User {} logged out'.format(self.request.user))
             logout(self.request)
         return super(AuthLogoutView, self).get_redirect_url(*args, **kwargs)
