@@ -50,6 +50,13 @@ def workspace(request):
                 newdoc.status = 2
                 newdoc.version = existing[0].version + 0.1
                 newdoc.save()
+            elif existing and existing[0].status == 3:
+                newdoc.filename = existing[0].filename
+                for file in existing:
+                    file.filename = "_" + file.filename
+                newdoc.status = 0
+                newdoc.version = 0.1
+                newdoc.save()
             elif not existing:
                 newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                                   filename=request.FILES['docfile'].name)
@@ -63,14 +70,7 @@ def workspace(request):
 
     # Load documents for the list page
     # status 0 means draft
-    documents = Document.objects.filter(status__in=[0, 1, 2], author=request.user)
-    items, item_ids = [], []
-    for item in documents:
-        if item.filename not in item_ids:
-            items.append(item)
-            item_ids.append(item.filename)
-    blocked = Document.objects.filter(status=3, author=request.user)
-    items = [x for x in items if x.filename not in map(lambda x: x.filename, blocked)]
+    items = Document.objects.filter(status__in=[0, 1, 2], author=request.user).exclude(status=3)
     # Render list page with the documents and the form
     return render(
         request,
@@ -159,11 +159,12 @@ def flux_manage_detail(request, pk):
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
-        new_doc_id = request.POST['doc_choice']
-        step_id = request.POST['orig']
-        s = Step.objects.get(id=step_id)
-        s.document = Document.objects.get(id=new_doc_id)
-        s.save()
+        new_doc_id = request.POST.get('doc_choice')
+        step_id = request.POST.get('orig')
+        s = Step.objects.get(id=step_id) if step_id else None
+        if s:
+            s.document = Document.objects.get(id=new_doc_id) if new_doc_id else None
+            s.save()
         return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
     else:
         user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
@@ -259,6 +260,10 @@ def accept_flow(request, *args, **kwargs):
     if set(obj.flux_parent.acceptance_criteria.all()).issubset(obj.accepted_by.all()):
         obj.status = 1
         obj.save()
+        n = Notification(
+            to_user=obj.initiated_by, flux=obj, from_user=request.user,
+            message="Fluxul {} a fost acceptat de {}!".format(obj.flux_parent.title, request.user.username))
+        n.save()
     return redirect('current_tasks')
 
 
@@ -269,6 +274,12 @@ def reject_flow(request, *args, **kwargs):
     obj = obj.first()
     obj.status = 2
     obj.save()
+    msg = request.POST.get('msg')
+    if msg:
+        n = Notification(
+            to_user=obj.initiated_by, from_user=request.user, flux=obj,
+            message="Fluxul {} a fost refuzat! Motiv: {}".format(obj.flux_parent.title, msg))
+        n.save()
     return redirect('current_tasks')
 
 
