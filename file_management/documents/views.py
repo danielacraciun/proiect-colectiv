@@ -373,6 +373,12 @@ def new_flux(request, pk=None):
             s.document = Document.objects.get(id=new_doc_id)
             s.save()
 
+        for user in obj.flux_parent.acceptance_criteria.all():
+            n = Notification(
+                to_user=user, flux=obj, from_user=obj.initiated_by,
+                message="Fluxul {} pornit de {} asteapta sa fie revizuit".format(obj.flux_parent.title, request.user.username))
+            n.save()
+
         return HttpResponseRedirect(reverse_lazy('init_tasks'))
     else:
         flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
