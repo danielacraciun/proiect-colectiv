@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'documents.apps.DocumentsConfig',
     'templateuri.apps.TemplateuriConfig',
+    'log_module.apps.LogModuleConfig',
     'widget_tweaks',
     'datetimewidget',
     'django_nose',

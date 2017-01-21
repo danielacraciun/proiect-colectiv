@@ -8,4 +8,5 @@ urlpatterns = [
     url(r'^usr/', include('user.urls')),
     url(r'^documents/', include('documents.urls'), name='workspace'),
     url(r'^templates/', include('templateuri.urls')),
+    url(r'^logs/', include('log_module.urls')),
 ]
