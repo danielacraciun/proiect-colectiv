@@ -290,15 +290,14 @@ def step_create(request):
         form = StepCreate(request.POST, request.FILES)
         title = request.POST['title']
         tmp_id = request.POST['template']
-        t = Template.objects.get(id=tmp_id)
+        t = Template.objects.get(id=tmp_id) if int(tmp_id) > 0 else None
         s = Step(name=title, template_file=t, document=None)
         s.save()
         return HttpResponseRedirect(reverse('create_flow'))
     else:
         user_choices = list(Template.objects.values_list('id', 'filename'))
-        fields = {}
-        fields['title'] = CharField(max_length=100)
-        fields['template'] = ChoiceField(choices=user_choices)
+        user_choices.append((-1, None))
+        fields = {'title': CharField(max_length=100), 'template': ChoiceField(choices=user_choices)}
         MyForm = type('StepCreate', (BaseForm,), {'base_fields': fields})
         form = MyForm()  # A empty, unbound form
     return render(

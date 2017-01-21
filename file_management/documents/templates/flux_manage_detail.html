@@ -18,6 +18,7 @@
                             <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=step.document.id %}"
                                     title="Download document">
                                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
+
                             <br>
                             <strong>Select another one?</strong> <br/>
                             <form action="{% url 'flux_detail' pk=obj.id %}" method="post" enctype="multipart/form-data"
