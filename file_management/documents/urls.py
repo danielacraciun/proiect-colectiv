@@ -6,6 +6,8 @@ urlpatterns = [
     url(r'^workspace/$', views.workspace, name='workspace'),
     url(r'^create_flow/$', views.CreateFlow.as_view(), name='create_flow'),
     url(r'^init_tasks/$', views.InitiatedTasks.as_view(), name='init_tasks'),
+    url(r'^new_task/$', views.new_flux, name='new_task'),
+    url(r'^new_task/(?P<pk>\d+)/$', views.new_flux, name='new_task'),
     url(r'^current_tasks/$', views.CurrentTasks.as_view(), name='current_tasks'),
     url(r'^fin_tasks/$', views.FinishedTasks.as_view(), name='fin_tasks'),
     url(r'^notifications/$', views.Notifications.as_view(), name='notifications'),
@@ -18,4 +20,6 @@ urlpatterns = [
     url(r'^manage_flux/(?P<pk>\d+)/', views.flux_manage_detail, name='flux_manage_detail'),
     url(r'^accept_manage_flux/(?P<pk>\d+)/', views.accept_flow, name='accept_flux_manage_detail'),
     url(r'^reject_manage_flux/(?P<pk>\d+)/', views.reject_flow, name='reject_flux_manage_detail'),
+    url(r'^review_flux/(?P<pk>\d+)/', views.review_flux, name='review_flux'),
+
 ]

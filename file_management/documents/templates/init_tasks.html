@@ -7,6 +7,10 @@
         {{ request.user.username }}
     {% endif %}
 </h1>
+    <form class="form-horizontal" action="{% url 'new_task' %}" method="get">
+        {{ form.flux_model_select }}
+        <input type="submit" value="New" />
+    </form>
 {% if object_list %}
     {% for obj in object_list %}
          <div class="col-md-10">

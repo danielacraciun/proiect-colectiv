@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.forms import IntegerField, HiddenInput
 from django.forms import ModelForm, ChoiceField, BaseForm, CharField
 from django.http import Http404
 from django.http import HttpResponseRedirect
@@ -9,13 +10,19 @@ from django.views.generic import TemplateView, DetailView, DeleteView
 
 from documents.forms import DocChoice, StepCreate
 from documents.forms import DocumentForm
+from documents.forms import FluxInstanceForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
 from documents.models import FluxModel
 from templateuri.models import Template
 from user.models import Notification
+from django.db.models import Q
+
+import logging
 
 
 def workspace(request):
+    logger = logging.getLogger('documents')
+
     # Handle file upload
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -62,7 +69,7 @@ def workspace(request):
                                   filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1
                 newdoc.save()
-
+            logger.info('User {} added version {} of Document {}'.format(request.user, newdoc.version, newdoc.filename))
             # Redirect to the document list after POST
             return HttpResponseRedirect(reverse('workspace'))
     else:
@@ -80,7 +87,6 @@ def workspace(request):
 
 
 class FluxModelForm(ModelForm):
-
     def __init__(self, *args, **kwargs):
         self.s = kwargs.pop('steps', None)
         super(FluxModelForm, self).__init__(*args, **kwargs)
@@ -106,6 +112,7 @@ class CreateFlow(CreateView):
         kwargs['steps'] = Step.objects.filter(document=None).values_list('id', 'name')
         return kwargs
 
+
 class Notifications(TemplateView):
     template_name = 'notifications.html'
 
@@ -127,10 +134,12 @@ class InitiatedTasks(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
         context['object_list'] = self.get_queryset()
+        context['form'] = FluxInstanceForm
         return context
 
 
 def flux_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
@@ -139,6 +148,7 @@ def flux_detail(request, pk):
         s = Step.objects.get(id=step_id)
         s.document = Document.objects.get(id=new_doc_id)
         s.save()
+        logger.info('User {} added Document {} for Step {}'.format(request.user, s.document.filename, s.name))
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
         user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename', 'version'))
@@ -156,6 +166,7 @@ def flux_detail(request, pk):
 
 
 def flux_manage_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
@@ -167,7 +178,8 @@ def flux_manage_detail(request, pk):
             s.save()
         return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
     else:
-        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
         fields = {'doc_choice': ChoiceField(choices=user_choices)}
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
         form = MyForm()
@@ -202,14 +214,21 @@ class CurrentTasks(TemplateView):
 class FinishedTasks(TemplateView):
     # finished fluxes and docs
     template_name = 'fin_tasks.html'
+    model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING)
-        return tasks
+        to_show_id = []
+        tasks = FluxInstance.objects.filter(status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
+        for task in tasks:
+            if task.initiated_by.id == self.request.user.id:
+                to_show_id.append(task.id)
+            elif self.request.user in task.flux_parent.acceptance_criteria.all():
+                to_show_id.append(task.id)
+        return FluxInstance.objects.filter(id__in=to_show_id)
 
     def get_context_data(self, **kwargs):
         context = super(FinishedTasks, self).get_context_data()
-        context['fluxes'] = self.get_queryset()
+        context['object_list'] = self.get_queryset()
         return context
 
 
@@ -236,23 +255,30 @@ class DocumentRemoveView(DeleteView):
     object = None
 
     def get_queryset(self):
+        logger = logging.getLogger('documents')
+        logger.info('User {} removed version {} of Document {}'.format(self.request.user, model.version, model.filename))
         return Document.objects.filter(author=self.request.user)
 
 
 def make_final(request, *args, **kwargs):
+    logger = logging.getLogger('documents')
     obj = Document.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find document'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.status = 1
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
+    logger.info('User {} made final Document {}'.format(request.user, obj.filename))
     return redirect('workspace')
 
 
 def accept_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find flux'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.accepted_by.add(request.user)
@@ -264,10 +290,12 @@ def accept_flow(request, *args, **kwargs):
             to_user=obj.initiated_by, flux=obj, from_user=request.user,
             message="Fluxul {} a fost acceptat de {}!".format(obj.flux_parent.title, request.user.username))
         n.save()
+    logger.info('User {} accepted Flow {}'.format(request.user, obj.title))
     return redirect('current_tasks')
 
 
 def reject_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
         raise Http404()
@@ -280,10 +308,12 @@ def reject_flow(request, *args, **kwargs):
             to_user=obj.initiated_by, from_user=request.user, flux=obj,
             message="Fluxul {} a fost refuzat! Motiv: {}".format(obj.flux_parent.title, msg))
         n.save()
+    logger.info('User {} rejected Flow {}'.format(request.user, obj.title))
     return redirect('current_tasks')
 
 
 def step_create(request):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = StepCreate(request.POST, request.FILES)
@@ -292,6 +322,7 @@ def step_create(request):
         t = Template.objects.get(id=tmp_id)
         s = Step(name=title, template_file=t, document=None)
         s.save()
+        logger.info('User {} added Step {} with Template {}'.format(request.user, s.name, t.filename))
         return HttpResponseRedirect(reverse('create_flow'))
     else:
         user_choices = list(Template.objects.values_list('id', 'filename'))
@@ -305,3 +336,71 @@ def step_create(request):
         'step_create.html',
         {'form': form}
     )
+
+
+def review_flux(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
+    else:
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {'doc_choice': ChoiceField(choices=user_choices)}
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+    return render(
+        request,
+        'flux_view_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form})
+
+
+def new_flux(request, pk=None):
+    if request.method == 'POST':
+        obj = FluxInstance.objects.get(id=pk)
+        for i, step in enumerate(obj.steps.all()):
+            new_doc_id = request.POST['doc_choice_{}'.format(i)]
+            step_id = request.POST['orig_id_{}'.format(i)]
+            s = Step.objects.get(id=step_id)
+            s.document = Document.objects.get(id=new_doc_id)
+            s.save()
+
+        return HttpResponseRedirect(reverse_lazy('init_tasks'))
+    else:
+        flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
+        obj = FluxInstance(flux_parent=FluxModel.objects.filter(id=request.GET['flux_model_select']).first(),
+                           initiated_by=request.user)
+        obj.save()
+
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {"numsteps": IntegerField(widget=HiddenInput(), initial=len(list(flux_model.steps.all())))}
+
+        for i, step in enumerate(flux_model.steps.all()):
+            step.id = None
+            step.save()
+            obj.steps.add(Step.objects.latest('id'))
+            fields.update({'doc_choice_{}'.format(i): ChoiceField(choices=user_choices)})
+            fields.update({'orig_id_{}'.format(i): IntegerField(widget=HiddenInput(), initial=step.id)})
+
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+
+        print(request.GET['flux_model_select'])
+        print(obj.flux_parent)
+
+        return render(
+            request,
+            "new_task.html",
+            {
+                'obj': obj,
+                'form': form,
+            }
+        )
