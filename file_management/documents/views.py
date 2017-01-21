@@ -1,20 +1,17 @@
 from django.core.urlresolvers import reverse, reverse_lazy
+from django.forms import ModelForm
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
-
-from documents.forms import DocumentForm, DocChoice
-
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
+
+from documents.forms import DocChoice
 from documents.forms import DocumentForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
-
-# to do: add management commnd that deletes docs after 30 days
-from user.models import Notification
-
 from documents.models import FluxModel
+from user.models import Notification
 
 
 def workspace(request):
@@ -81,17 +78,20 @@ def workspace(request):
     )
 
 
-class CreateFlow(CreateView):
-    template_name = 'create_flow.html'
-    # form_class = FluxModelForm
-    model = FluxModel
-    fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
-    success_url = reverse_lazy('workspace')
+class FluxModelForm(ModelForm):
+    class Meta:
+        model = FluxModel
+        fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
+        widgets = {
 
-    # def get_context_data(self, **kwargs):
-    #     context = super(CreateFlow, self).get_context_data()
-    #     context['create_flow'] = Notification.objects.filter(to_user=self.request.user)
-    #     return context
+        }
+        success_url = reverse_lazy('workspace')
+
+
+class CreateFlow(CreateView):
+    form_class = FluxModelForm
+    model = FluxModel
+    template_name = 'create_flow.html'
 
 
 class Notifications(TemplateView):
@@ -138,12 +138,14 @@ def flux_detail(request, pk):
          'form': form}
     )
 
+
 class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(accepted_by=self.request.user).distinct();
+        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
+            accepted_by=self.request.user).distinct();
         return tasks
 
     def get_context_data(self, **kwargs):
