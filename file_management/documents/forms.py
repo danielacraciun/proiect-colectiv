@@ -18,3 +18,7 @@ class DocChoice(forms.Form):
     except OperationalError:
         doc_choice = forms.ChoiceField(choices=[])
     orig_id = forms.IntegerField()
+
+class StepCreate(forms.Form):
+    title = forms.CharField(max_length=100)
+    tmps = forms.ChoiceField(choices=[])

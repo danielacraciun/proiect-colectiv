@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^(?P<pk>\d+)/download', ObjectDownloadView.as_view(model=models.Document, file_field='docfile'), name='download'),
     url(r'^(?P<pk>\d+)/make_final', views.make_final, name='make_final'),
     url(r'^view_flux/(?P<pk>\d+)/', views.flux_detail, name='flux_detail'),
+    url(r'^create_step/$', views.step_create, name='create_step'),
 ]
