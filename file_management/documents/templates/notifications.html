@@ -14,7 +14,7 @@
         {% for req in notifications %}
         <tr>
             <td> {{ req.from_user.username }} </td>
-            <td> {{ req.flux }} </td>
+            <td> {{ req.flux.flux_parent.title }} </td>
             <td> {{ req.message }} </td>
         </tr>
         {% endfor %}

@@ -17,8 +17,12 @@ from templateuri.models import Template
 from user.models import Notification
 from django.db.models import Q
 
+import logging
+
 
 def workspace(request):
+    logger = logging.getLogger('documents')
+
     # Handle file upload
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -53,12 +57,19 @@ def workspace(request):
                 newdoc.status = 2
                 newdoc.version = existing[0].version + 0.1
                 newdoc.save()
+            elif existing and existing[0].status == 3:
+                newdoc.filename = existing[0].filename
+                for file in existing:
+                    file.filename = "_" + file.filename
+                newdoc.status = 0
+                newdoc.version = 0.1
+                newdoc.save()
             elif not existing:
                 newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                                   filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1
                 newdoc.save()
-
+            logger.info('User {} added version {} of Document {}'.format(request.user, newdoc.version, newdoc.filename))
             # Redirect to the document list after POST
             return HttpResponseRedirect(reverse('workspace'))
     else:
@@ -66,14 +77,7 @@ def workspace(request):
 
     # Load documents for the list page
     # status 0 means draft
-    documents = Document.objects.filter(status__in=[0, 1, 2], author=request.user)
-    items, item_ids = [], []
-    for item in documents:
-        if item.filename not in item_ids:
-            items.append(item)
-            item_ids.append(item.filename)
-    blocked = Document.objects.filter(status=3, author=request.user)
-    items = [x for x in items if x.filename not in map(lambda x: x.filename, blocked)]
+    items = Document.objects.filter(status__in=[0, 1, 2], author=request.user).exclude(status=3)
     # Render list page with the documents and the form
     return render(
         request,
@@ -135,6 +139,7 @@ class InitiatedTasks(TemplateView):
 
 
 def flux_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
@@ -143,10 +148,11 @@ def flux_detail(request, pk):
         s = Step.objects.get(id=step_id)
         s.document = Document.objects.get(id=new_doc_id)
         s.save()
+        logger.info('User {} added Document {} for Step {}'.format(request.user, s.document.filename, s.name))
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
-        user_choices = list(
-            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename', 'version'))
+        user_choices = [(idx, filename + ": version %.2f" % version) for idx, filename, version in user_choices]
         fields = {'doc_choice': ChoiceField(choices=user_choices)}
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
         form = MyForm()
@@ -160,14 +166,16 @@ def flux_detail(request, pk):
 
 
 def flux_manage_detail(request, pk):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = DocChoice(request.POST, request.FILES)
-        new_doc_id = request.POST['doc_choice']
-        step_id = request.POST['orig']
-        s = Step.objects.get(id=step_id)
-        s.document = Document.objects.get(id=new_doc_id)
-        s.save()
+        new_doc_id = request.POST.get('doc_choice')
+        step_id = request.POST.get('orig')
+        s = Step.objects.get(id=step_id) if step_id else None
+        if s:
+            s.document = Document.objects.get(id=new_doc_id) if new_doc_id else None
+            s.save()
         return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
     else:
         user_choices = list(
@@ -247,23 +255,30 @@ class DocumentRemoveView(DeleteView):
     object = None
 
     def get_queryset(self):
+        logger = logging.getLogger('documents')
+        logger.info('User {} removed version {} of Document {}'.format(self.request.user, model.version, model.filename))
         return Document.objects.filter(author=self.request.user)
 
 
 def make_final(request, *args, **kwargs):
+    logger = logging.getLogger('documents')
     obj = Document.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find document'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.status = 1
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
+    logger.info('User {} made final Document {}'.format(request.user, obj.filename))
     return redirect('workspace')
 
 
 def accept_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
+        logger.error('User {} encountered error. Could not find flux'.format(request.user))
         raise Http404()
     obj = obj.first()
     obj.accepted_by.add(request.user)
@@ -271,20 +286,34 @@ def accept_flow(request, *args, **kwargs):
     if set(obj.flux_parent.acceptance_criteria.all()).issubset(obj.accepted_by.all()):
         obj.status = 1
         obj.save()
+        n = Notification(
+            to_user=obj.initiated_by, flux=obj, from_user=request.user,
+            message="Fluxul {} a fost acceptat de {}!".format(obj.flux_parent.title, request.user.username))
+        n.save()
+    logger.info('User {} accepted Flow {}'.format(request.user, obj.flux_parent.title))
     return redirect('current_tasks')
 
 
 def reject_flow(request, *args, **kwargs):
+    logger = logging.getLogger('flows')
     obj = FluxInstance.objects.filter(id=kwargs['pk'])
     if not obj:
         raise Http404()
     obj = obj.first()
     obj.status = 2
     obj.save()
+    msg = request.POST.get('msg')
+    if msg:
+        n = Notification(
+            to_user=obj.initiated_by, from_user=request.user, flux=obj,
+            message="Fluxul {} a fost refuzat! Motiv: {}".format(obj.flux_parent.title, msg))
+        n.save()
+    logger.info('User {} rejected Flow {}'.format(request.user, obj.title))
     return redirect('current_tasks')
 
 
 def step_create(request):
+    logger = logging.getLogger('flows')
     # Handle file upload
     if request.method == 'POST':
         form = StepCreate(request.POST, request.FILES)
@@ -293,6 +322,7 @@ def step_create(request):
         t = Template.objects.get(id=tmp_id) if int(tmp_id) > 0 else None
         s = Step(name=title, template_file=t, document=None)
         s.save()
+        logger.info('User {} added Step {} with Template {}'.format(request.user, s.name, t.filename))
         return HttpResponseRedirect(reverse('create_flow'))
     else:
         user_choices = list(Template.objects.values_list('id', 'filename'))
