@@ -1,14 +1,14 @@
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http import Http404
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.shortcuts import render
 
 from documents.forms import DocumentForm, DocChoice
 
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
-from documents.forms import DocumentForm
+from documents.forms import DocumentForm, FluxInstanceForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
 
 # to do: add management commnd that deletes docs after 30 days
@@ -115,6 +115,7 @@ class InitiatedTasks(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
         context['object_list'] = self.get_queryset()
+        context['form'] = FluxInstanceForm
         return context
 
 
@@ -138,12 +139,14 @@ def flux_detail(request, pk):
          'form': form}
     )
 
+
 class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(accepted_by=self.request.user).distinct();
+        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
+            accepted_by=self.request.user).distinct();
         return tasks
 
     def get_context_data(self, **kwargs):
@@ -202,3 +205,40 @@ def make_final(request, *args, **kwargs):
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
     return redirect('workspace')
+
+
+def new_flux(request, pk=None):
+    if pk:
+        obj = FluxInstance.objects.get(id=pk)
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+
+        # if finish:
+        return HttpResponseRedirect(reverse_lazy('init_tasks'))
+        # return HttpResponseRedirect(reverse('new_flux', kwargs={'obj': obj}))
+    else:
+        form = DocChoice()
+        flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
+        obj = FluxInstance(flux_parent=FluxModel.objects.filter(id=request.GET['flux_model_select']).first(),
+                           initiated_by=request.user)
+        obj.save()
+        print(request.GET['flux_model_select'])
+        print(obj.flux_parent)
+        for step in flux_model.steps.all():
+            step.id = None
+            step.save()
+            obj.steps.add(Step.objects.latest('id'))
+
+    return render(
+        request,
+        "new_task.html",
+        {
+            'obj': obj,
+            'form': form
+        }
+    )
