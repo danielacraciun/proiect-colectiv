@@ -230,6 +230,6 @@ def make_final(request, *args, **kwargs):
     obj = obj.first()
     obj.status = 1
     obj.save()
-    obj.version += 1
+    obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
     return redirect('workspace')

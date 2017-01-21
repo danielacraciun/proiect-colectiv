@@ -24,7 +24,7 @@
             {% if req.author == request.user and req.status < 3 %}
             <tr>
                 <td> {{ req.author }}</td>
-                <td> {{ req.version|floatformat:2 }}</td>
+                <td> {{ req.version|floatformat:1 }}</td>
                 <td> {{ req.get_status_display }} </td>
                 <td> {{ req.signed|yesno:"Yes,No" }}</td>
                 <td>
@@ -49,7 +49,7 @@
                  title="Make document final">
                 <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
                     {% else %}
-                        Document incompatibil.
+                        Marcat final.
                     {% endif %}
                 </a>
               </td>

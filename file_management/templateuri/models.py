@@ -9,8 +9,8 @@ class Template(models.Model):
     docfile = models.FileField(upload_to='templateuri/%Y/%m/%d/')
     filename = models.CharField(max_length=100, null=True, blank=True)
     created_on = models.DateTimeField(blank=False, default=now)
-    fields = models.CharField(max_length=2500, null=False, blank=False)
-    filetype = models.CharField(max_length=100, null=False, blank=False)
+    fields = models.CharField(max_length=2500, null=True, blank=True, default="")
+    filetype = models.CharField(max_length=100, null=True, blank=True, default="")
 
     def __str__(self):
         return '{}'.format(self.filename)

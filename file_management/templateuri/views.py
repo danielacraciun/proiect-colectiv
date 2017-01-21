@@ -9,17 +9,20 @@ from django.utils.timezone import now
 from templateuri.forms import TemplateForm
 from templateuri.models import Template
 
-# Create your views here.
+def generate_filetype(filename):
+    return "." + filename.split(".")[1]
 
 def template_list(request):
 
     if request.method == 'POST':
         form = TemplateForm(request.POST, request.FILES)
         if form.is_valid():
+            import pudb; pu.db
             doc = request.FILES['docfile']
-
             origname = request.FILES['docfile'].name
-            newdoc = Template(docfile=request.FILES['docfile'], filename=request.FILES['docfile'].name, created_on = now)
+            newdoc = Template(
+                docfile=request.FILES['docfile'], filename=request.FILES['docfile'].name,
+                filetype=generate_filetype(origname))
             newdoc.save()
 
             # Redirect to the document list after POST
