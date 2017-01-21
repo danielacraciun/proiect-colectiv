@@ -80,7 +80,6 @@ def workspace(request):
 
 
 class FluxModelForm(ModelForm):
-
     def __init__(self, *args, **kwargs):
         self.s = kwargs.pop('steps', None)
         super(FluxModelForm, self).__init__(*args, **kwargs)
@@ -105,6 +104,7 @@ class CreateFlow(CreateView):
         kwargs = super(CreateFlow, self).get_form_kwargs()
         kwargs['steps'] = Step.objects.filter(document=None).values_list('id', 'name')
         return kwargs
+
 
 class Notifications(TemplateView):
     template_name = 'notifications.html'
@@ -141,7 +141,8 @@ def flux_detail(request, pk):
         s.save()
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
-        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
         fields = {'doc_choice': ChoiceField(choices=user_choices)}
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
         form = MyForm()
@@ -165,7 +166,8 @@ def flux_manage_detail(request, pk):
         s.save()
         return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
     else:
-        user_choices = list(Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
         fields = {'doc_choice': ChoiceField(choices=user_choices)}
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
         form = MyForm()
@@ -200,14 +202,15 @@ class CurrentTasks(TemplateView):
 class FinishedTasks(TemplateView):
     # finished fluxes and docs
     template_name = 'fin_tasks.html'
+    model = FluxInstance
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING)
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
         return tasks
 
     def get_context_data(self, **kwargs):
         context = super(FinishedTasks, self).get_context_data()
-        context['fluxes'] = self.get_queryset()
+        context['object_list'] = self.get_queryset()
         return context
 
 
@@ -293,3 +296,27 @@ def step_create(request):
         'step_create.html',
         {'form': form}
     )
+
+
+def review_flux(request, pk):
+    # Handle file upload
+    if request.method == 'POST':
+        form = DocChoice(request.POST, request.FILES)
+        new_doc_id = request.POST['doc_choice']
+        step_id = request.POST['orig']
+        s = Step.objects.get(id=step_id)
+        s.document = Document.objects.get(id=new_doc_id)
+        s.save()
+        return HttpResponseRedirect(reverse('flux_manage_detail', kwargs={'pk': pk}))
+    else:
+        user_choices = list(
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+        fields = {'doc_choice': ChoiceField(choices=user_choices)}
+        MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
+        form = MyForm()
+    return render(
+        request,
+        'flux_view_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=pk).first(),
+         'docs': Document.objects.filter(author=request.user),
+         'form': form})

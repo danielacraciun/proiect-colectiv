@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="col-md-10">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ obj.flux_parent.title }}</h3>
+            </div>
+            <div class="panel-body">
+                <strong>Pasii necesari:</strong> <br/>
+
+                <ul class="list-group">
+                    {% for step in obj.steps.all %}
+                        <li class="list-group-item">
+                            <h4>{{ step.name }} <br/></h4>
+                            <hr/>
+                            <strong>Current document:</strong>
+                            {{ step.document.filename }} <br/>
+                            <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=step.document.id %}"
+                               title="Download document">
+                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
+                            <br>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <strong>Aprobat de:</strong> <br/>
+                <ul class="list-group">
+                    {% for usr in obj.accepted_by.all %}
+                        <li class="list-group-item">
+                            {% if usr.get_full_name %}
+                                {{ usr.get_full_name }}
+                            {% else %}
+                                {{ usr.username }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div><br/>
+{% endblock %}
+
+
+
