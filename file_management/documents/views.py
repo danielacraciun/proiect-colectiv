@@ -272,7 +272,7 @@ def accept_flow(request, *args, **kwargs):
     obj.save()
     if set(obj.flux_parent.acceptance_criteria.all()).issubset(obj.accepted_by.all()):
         obj.status = 1
-        obj.save    
+        obj.save()
     logger.info('User {} accepted Flow {}'.format(request.user, obj.title))
 
     return redirect('current_tasks')
