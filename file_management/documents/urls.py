@@ -16,4 +16,6 @@ urlpatterns = [
     url(r'^view_flux/(?P<pk>\d+)/', views.flux_detail, name='flux_detail'),
     url(r'^create_step/$', views.step_create, name='create_step'),\
     url(r'^manage_flux/(?P<pk>\d+)/', views.flux_manage_detail, name='flux_manage_detail'),
+    url(r'^accept_manage_flux/(?P<pk>\d+)/', views.accept_flow, name='accept_flux_manage_detail'),
+    url(r'^reject_manage_flux/(?P<pk>\d+)/', views.reject_flow, name='reject_flux_manage_detail'),
 ]

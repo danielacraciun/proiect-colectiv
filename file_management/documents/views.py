@@ -181,22 +181,13 @@ class CurrentTasks(TemplateView):
     # requiring action fluxes
     template_name = 'tasks.html'
     model = FluxInstance
-    # def get_queryset(self):
-    #     tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
-    #         accepted_by=self.request.user).distinct()
-    #     return tasks
-    #
-    # def get_context_data(self, **kwargs):
-    #     context = super(CurrentTasks, self).get_context_data(**kwargs)
-    #     context['fluxes'] = self.get_queryset()
-    #     return context
 
     def get_queryset(self):
         id_list = []
         for parent in FluxModel.objects.all():
             if self.request.user in parent.acceptance_criteria.all():
                 for instance in parent.instances.all():
-                    if self.request.user not in instance.accepted_by.all():
+                    if self.request.user not in instance.accepted_by.all() and instance.status != FluxStatus.REJECTED:
                         id_list.append(instance.id)
         return FluxInstance.objects.filter(id__in=id_list)
 
@@ -211,7 +202,7 @@ class FinishedTasks(TemplateView):
     template_name = 'fin_tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING);
+        tasks = FluxInstance.objects.filter(initiated_by=self.request.user).exclude(status=FluxStatus.PENDING)
         return tasks
 
     def get_context_data(self, **kwargs):
@@ -255,6 +246,29 @@ def make_final(request, *args, **kwargs):
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
     return redirect('workspace')
+
+
+def accept_flow(request, *args, **kwargs):
+    obj = FluxInstance.objects.filter(id=kwargs['pk'])
+    if not obj:
+        raise Http404()
+    obj = obj.first()
+    obj.accepted_by.add(request.user)
+    obj.save()
+    if set(obj.flux_parent.acceptance_criteria.all()).issubset(obj.accepted_by.all()):
+        obj.status = 1
+        obj.save()
+    return redirect('current_tasks')
+
+
+def reject_flow(request, *args, **kwargs):
+    obj = FluxInstance.objects.filter(id=kwargs['pk'])
+    if not obj:
+        raise Http404()
+    obj = obj.first()
+    obj.status = 2
+    obj.save()
+    return redirect('current_tasks')
 
 
 def step_create(request):
