@@ -1,9 +1,46 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
+
 {% block content %}
-<h1> Create Flow </h1>
-<form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Send message" />
+<h1> Creeare flux </h1>
+<form method="post" class = "form-horizontal" role = "form">
+  {% csrf_token %}
+      <p>{{ form.non_field_errors }}
+    {{ form.errors }}</p>
+
+    <fieldset class="form-group">
+        {{ form.title.label_tag }}
+        {{ form.title| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.steps.label_tag }}
+        {{ form.steps| add_class:"form-control" }}
+    </fieldset>
+    <a class="btn btn-m btn-default btn-icon" href="{% url 'create_step' %}" title="Add step">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New step
+    </a>
+
+    <fieldset class="form-group">
+        {{ form.acceptance_criteria.label_tag }}
+        {{ form.acceptance_criteria| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.groups.label_tag }}
+        {{ form.groups| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.days_until_stale.label_tag }}
+        {{ form.days_until_stale| add_class:"form-control" }}
+    </fieldset>
+
+   <div class = "form-group">
+      <div class = "col-sm-2">
+          <input type="submit"  class="btn btn-default value="Save" />
+      </div>
+   </div>
 </form>
 
 {% endblock %}
