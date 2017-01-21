@@ -3,9 +3,9 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.views.generic import TemplateView, DetailView, DeleteView
-from documents.forms import DocumentForm
-from documents.models import Document, FluxInstance, FluxStatus
+from django.views.generic import TemplateView, DetailView, DeleteView, CreateView, FormView
+from documents.forms import DocumentForm, FluxModelSelectionForm
+from documents.models import Document, FluxInstance, FluxStatus, FluxModel
 
 # to do: add management commnd that deletes docs after 30 days
 from user.models import Notification
@@ -84,9 +84,10 @@ class Notifications(TemplateView):
         return context
 
 
-class InitiatedTasks(TemplateView):
+class InitiatedTasks(FormView):
     # all fluxes
     template_name = 'init_tasks.html'
+    form_class = FluxModelSelectionForm
 
     def get_queryset(self):
         tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING);
@@ -103,12 +104,40 @@ class CurrentTasks(TemplateView):
     template_name = 'tasks.html'
 
     def get_queryset(self):
-        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(accepted_by=self.request.user).distinct();
+        tasks = FluxInstance.objects.filter(flux_parent__acceptance_criteria=self.request.user).exclude(
+            accepted_by=self.request.user).distinct();
         return tasks
 
     def get_context_data(self, **kwargs):
         context = super(CurrentTasks, self).get_context_data(**kwargs)
         context['fluxes'] = self.get_queryset()
+        return context
+
+
+class NewTask(FormView):
+    form_class = FluxModelSelectionForm
+    template_name = 'new_task.html'
+
+    def form_valid(self, form):
+        return super(FormView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(NewTask, self).get_context_data(**kwargs)
+        flux_model_id = self.request.GET.get('flux_parent', None)
+        if flux_model_id:
+            context['flux_model'] = FluxModel.objects.filter(pk=flux_model_id)
+        else:
+            context['flux_model'] = None
+        return context
+
+
+class TaskInitializationView(DetailView):
+    template_name = 'form_initialization.html'
+    model = FluxInstance
+
+    def get_context_data(self, **kwargs):
+        context = super(TaskInitializationView, self).get_context_data()
+        context['flux_model'] = FluxModel.objects.filter(pk=self.kwargs.get(self.pk_url_kwarg)).first()
         return context
 
 

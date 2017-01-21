@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+
+    <form action="" method="get">
+        <div>
+            <label for="id_flux_parent">Model : </label>
+            {{ form.flux_parent | add_class:'form-control' }}
+        </div>
+    </form>
+
+
+    {% if flux_model %}
+
+        YAAAY
+
+        {{ flux_model.days_until_stale }}
+
+    {% endif %}
+
+{% endblock %}
+

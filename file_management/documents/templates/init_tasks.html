@@ -1,30 +1,39 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
 
-{% if fluxes %}
-<h1> Task-uri initiate </h1>
-<table class="table table-striped">
-        <thead>
+    <form action="{% url 'new_task' %}" method="post" class="form-inline">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_flux_parent">Model : </label>
+            {{ form.flux_parent | add_class:'form-control' }}
+            <input type="submit" value="New"/>
+        </div>
+    </form>
+
+    {% if fluxes %}
+        <h1> Task-uri initiate </h1>
+        <table class="table table-striped">
+            <thead>
             <tr>
                 <th>Name</th>
                 <th>Created On</th>
                 <th>Status</th>
             </tr>
-        </thead>
-        <tbody>
-        {% for flux in fluxes %}
-            <tr>
-                <td> {{ flux.flux_parent.title }} </td>
-                <td> {{ flux.created_on|date:'Y-m-d H:i' }}</td>
-                <td> {{ flux.get_status_display }}</td>
-              </td> 
-            </tr>
-        {% endfor %}
-        </tbody>
-</table>
-{% else %}
-<p>No finished tasks.</p>
-{% endif %}
+            </thead>
+            <tbody>
+            {% for flux in fluxes %}
+                <tr>
+                    <td> {{ flux.flux_parent.title }} </td>
+                    <td> {{ flux.created_on|date:'Y-m-d H:i' }} </td>
+                    <td> {{ flux.get_status_display }} </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No finished tasks.</p>
+    {% endif %}
 
 {% endblock %}
