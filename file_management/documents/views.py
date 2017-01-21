@@ -5,6 +5,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
+from django.utils.html import format_html
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
 
@@ -372,6 +373,12 @@ def new_flux(request, pk=None):
             s.document = Document.objects.get(id=new_doc_id)
             s.save()
 
+        for user in obj.flux_parent.acceptance_criteria.all():
+            n = Notification(
+                to_user=user, flux=obj, from_user=obj.initiated_by,
+                message="Fluxul {} pornit de {} asteapta sa fie revizuit".format(obj.flux_parent.title, request.user.username))
+            n.save()
+
         return HttpResponseRedirect(reverse_lazy('init_tasks'))
     else:
         flux_model = FluxModel.objects.filter(pk=request.GET['flux_model_select']).first()
@@ -383,11 +390,18 @@ def new_flux(request, pk=None):
             Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
         fields = {"numsteps": IntegerField(widget=HiddenInput(), initial=len(list(flux_model.steps.all())))}
 
+        links = {}
+
         for i, step in enumerate(flux_model.steps.all()):
+            if (step.template_file):
+                links.update({i: (step.name, step.template_file.id)})
+            else :
+                links.update({i: (step.name, None) })
+
             step.id = None
             step.save()
             obj.steps.add(Step.objects.latest('id'))
-            fields.update({'doc_choice_{}'.format(i): ChoiceField(choices=user_choices)})
+            fields.update({'doc_choice_{}'.format(i): ChoiceField(choices=user_choices, label=links[i])})
             fields.update({'orig_id_{}'.format(i): IntegerField(widget=HiddenInput(), initial=step.id)})
 
         MyForm = type('DocChoice', (BaseForm,), {'base_fields': fields})
@@ -402,5 +416,6 @@ def new_flux(request, pk=None):
             {
                 'obj': obj,
                 'form': form,
+                'links': links
             }
         )
