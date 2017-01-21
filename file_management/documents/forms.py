@@ -10,9 +10,6 @@ class DocumentForm(forms.Form):
 
 
 class DocChoice(forms.Form):
-    # try:
-    #     doc_choice = forms.ChoiceField(choices=Document.objects.values_list('id', 'filename'))
-    # except OperationalError:
     doc_choice = forms.ChoiceField(choices=[])
     orig_id = forms.IntegerField()
 
@@ -20,5 +17,11 @@ class DocChoice(forms.Form):
 class FluxInstanceForm(forms.Form):
     flux_model_select = forms.ModelChoiceField(queryset=FluxModel.objects.order_by('title').all())
 
+
 class FluxCompletionForm(forms.Form):
-    numsteps = forms.IntegerField();
+    numsteps = forms.IntegerField()
+
+
+class StepCreate(forms.Form):
+    title = forms.CharField(max_length=100)
+    tmps = forms.ChoiceField(choices=[])

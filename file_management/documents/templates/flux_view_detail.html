@@ -16,27 +16,15 @@
                             <strong>Current document:</strong>
                             {{ step.document.filename }} <br/>
                             <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=step.document.id %}"
-                                    title="Download document">
-                                        <span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
+                               title="Download document">
+                                <span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
                             <br>
-                            <strong>Select another one?</strong> <br/>
-                            <form action="{% url 'flux_detail' pk=obj.id %}" method="post" enctype="multipart/form-data"
-                                  class="form-horizontal" role="form">
-                                {% csrf_token %}
-                                <p>{{ form.doc_choice }}
-                                    <input type="hidden" name="orig" value="{{ step.id }}">
-                                </p>
-                                <button type="submit" class="btn btn-default">Submit</button>
-
-
-
-                            </form>
                         </li>
                     {% endfor %}
                 </ul>
-                <strong>Nevoie de aprobare de la:</strong> <br/>
+                <strong>Aprobat de:</strong> <br/>
                 <ul class="list-group">
-                    {% for usr in obj.flux_parent.acceptance_criteria.all %}
+                    {% for usr in obj.accepted_by.all %}
                         <li class="list-group-item">
                             {% if usr.get_full_name %}
                                 {{ usr.get_full_name }}
@@ -47,8 +35,6 @@
                     {% endfor %}
                 </ul>
             </div>
-        <a type="submit" class="btn btn-default" href="{% url 'accept_flux_manage_detail' pk=obj.id %}">Accept</a>
-        <a type="submit" class="btn btn-default" href="{% url 'reject_flux_manage_detail' pk=obj.id %}">Reject</a>
         </div>
     </div><br/>
 {% endblock %}

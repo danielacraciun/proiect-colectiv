@@ -2,8 +2,7 @@
 {% block content %}
     <div class="col-md-10">
         <div class="panel panel-default">
-            <form action="{% url 'new_task' pk=obj.id %}" method="post" enctype="multipart/form-data"
-                  class="form-horizontal" role="form">
+            <form action="{% url 'new_task' pk=obj.id %}" method="post" enctype="multipart/form-data" role="form">
                 {% csrf_token %}
 
                 <div class="panel-heading">
@@ -11,20 +10,7 @@
                 </div>
                 <div class="panel-body">
                     <strong>Pasii necesari:</strong> <br/>
-
                     {{ form }}
-{#                    <ul class="list-group">#}
-{#                        {% for step in obj.steps.all %}#}
-{#                            <li class="list-group-item">#}
-{#                                <h4>{{ step.name }} <br/></h4>#}
-{#                                <hr/>#}
-{#                                <p>#}
-{#                                    {{ form }}#}
-{#                                    <input type="hidden" name="orig" value="{{ step.id }}">#}
-{#                                </p>#}
-{#                            </li>#}
-{#                        {% endfor %}#}
-{#                    </ul>#}
                     <button type="submit" class="btn btn-default">Submit</button>
                 </div>
             </form>
