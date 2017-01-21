@@ -1,4 +1,5 @@
 from django.core.urlresolvers import reverse, reverse_lazy
+from django import forms
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -129,7 +130,11 @@ def flux_detail(request, pk):
         s.save()
         return HttpResponseRedirect(reverse('flux_detail', kwargs={'pk': pk}))
     else:
-        form = DocChoice()  # A empty, unbound form
+        user_choices = list(Document.objects.filter(author=request.user).values_list('id', 'filename'))
+        fields = {}
+        fields['doc_choice'] = forms.ChoiceField(choices=user_choices)
+        MyForm = type('DocChoice', (forms.BaseForm,), {'base_fields': fields})
+        form = MyForm() # A empty, unbound form
     return render(
         request,
         'flux_detail.html',
