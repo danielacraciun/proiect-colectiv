@@ -13,8 +13,9 @@ class DocumentForm(forms.Form):
 
 
 class DocChoice(forms.Form):
-    # try:
-    #     doc_choice = forms.ChoiceField(choices=Document.objects.values_list('id', 'filename'))
-    # except OperationalError:
     doc_choice = forms.ChoiceField(choices=[])
     orig_id = forms.IntegerField()
+
+class StepCreate(forms.Form):
+    title = forms.CharField(max_length=100)
+    tmps = forms.ChoiceField(choices=[])

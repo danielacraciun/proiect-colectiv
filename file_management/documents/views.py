@@ -1,5 +1,5 @@
 from django.core.urlresolvers import reverse, reverse_lazy
-from django.forms import ModelForm, ChoiceField, BaseForm
+from django.forms import ModelForm, ChoiceField, BaseForm, CharField
 from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -7,10 +7,11 @@ from django.shortcuts import render
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
 
-from documents.forms import DocChoice
+from documents.forms import DocChoice, StepCreate
 from documents.forms import DocumentForm
 from documents.models import Document, FluxInstance, FluxStatus, Step
 from documents.models import FluxModel
+from templateuri.models import Template
 from user.models import Notification
 
 
@@ -79,6 +80,12 @@ def workspace(request):
 
 
 class FluxModelForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.s = kwargs.pop('steps', None)
+        super(FluxModelForm, self).__init__(*args, **kwargs)
+        self.fields['steps'].choices = self.s
+
     class Meta:
         model = FluxModel
         fields = ['title', 'steps', 'acceptance_criteria', 'groups', 'days_until_stale']
@@ -92,7 +99,12 @@ class CreateFlow(CreateView):
     form_class = FluxModelForm
     model = FluxModel
     template_name = 'create_flow.html'
+    success_url = reverse_lazy('workspace')
 
+    def get_form_kwargs(self):
+        kwargs = super(CreateFlow, self).get_form_kwargs()
+        kwargs['steps'] = Step.objects.filter(document=None).values_list('id', 'name')
+        return kwargs
 
 class Notifications(TemplateView):
     template_name = 'notifications.html'
@@ -240,7 +252,30 @@ def make_final(request, *args, **kwargs):
         raise Http404()
     obj = obj.first()
     obj.status = 1
-    obj.save()
     obj.version = obj.version + 1 if obj.version >= 1 else 1
     obj.save()
     return redirect('workspace')
+
+
+def step_create(request):
+    # Handle file upload
+    if request.method == 'POST':
+        form = StepCreate(request.POST, request.FILES)
+        title = request.POST['title']
+        tmp_id = request.POST['template']
+        t = Template.objects.get(id=tmp_id)
+        s = Step(name=title, template_file=t, document=None)
+        s.save()
+        return HttpResponseRedirect(reverse('create_flow'))
+    else:
+        user_choices = list(Template.objects.values_list('id', 'filename'))
+        fields = {}
+        fields['title'] = CharField(max_length=100)
+        fields['template'] = ChoiceField(choices=user_choices)
+        MyForm = type('StepCreate', (BaseForm,), {'base_fields': fields})
+        form = MyForm()  # A empty, unbound form
+    return render(
+        request,
+        'step_create.html',
+        {'form': form}
+    )
