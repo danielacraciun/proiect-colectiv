@@ -7,7 +7,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class SQLiteHandler(logging.Handler):
-    initial_sql = """CREATE TABLE IF NOT EXISTS log(
+    initial_sql = """CREATE TABLE IF NOT EXISTS log_module_log(
+                        Id int,
                         Created text,
                         Name text,
                         LogLevel int,
@@ -28,7 +29,7 @@ class SQLiteHandler(logging.Handler):
                         Flow text
                    )"""
 
-    insertion_sql = """INSERT INTO log(
+    insertion_sql = """INSERT INTO log_module_log(
                         Created,
                         Name,
                         LogLevel,

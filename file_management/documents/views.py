@@ -256,8 +256,10 @@ class DocumentRemoveView(DeleteView):
     object = None
 
     def get_queryset(self):
+        doc_id = self.kwargs['pk']
+        doc = Document.objects.filter(id=doc_id).first()
         logger = logging.getLogger('documents')
-        logger.info('User {} removed version {} of Document {}'.format(self.request.user, model.version, model.filename))
+        logger.info('User {} removed version {} of Document {}'.format(self.request.user, doc.version, doc.filename))
         return Document.objects.filter(author=self.request.user)
 
 
