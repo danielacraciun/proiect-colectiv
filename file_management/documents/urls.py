@@ -21,5 +21,5 @@ urlpatterns = [
     url(r'^accept_manage_flux/(?P<pk>\d+)/', views.accept_flow, name='accept_flux_manage_detail'),
     url(r'^reject_manage_flux/(?P<pk>\d+)/', views.reject_flow, name='reject_flux_manage_detail'),
     url(r'^review_flux/(?P<pk>\d+)/', views.review_flux, name='review_flux'),
-
+    url(r'^(?P<pk>\d+)/(?P<pkf>\d+)/sign', views.sign_doc, name='sign'),
 ]

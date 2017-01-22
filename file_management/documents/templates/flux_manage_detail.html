@@ -15,10 +15,16 @@
                     <h4>{{ step.name }} <br/></h4>
                     <hr/>
                     <strong>Current document:</strong>
-                    {{ step.document.filename }} <br/>
+                    {{ step.document.filename }}
+                    {% if step.document.requires_signature %}
+                    <sup>Necesita semnatura</sup>
+                    {% endif %}
+                    <br />
                     <a class="btn btn-m btn-default btn-icon" href="{% url 'download' pk=step.document.id %}"
                        title="Download document">
                         <span class="glyphicon glyphicon-download" aria-hidden="true"></span></a>
+                    <a class="btn btn-m btn-default btn-icon" href="{% url 'sign' pk=step.document.id pkf=obj.id%}"
+                       title="Sign document">Sign and accept</a>
                     <br>
                     <strong>Select another one?</strong> <br/>
                     <form action="{% url 'flux_manage_detail' pk=obj.id %}" method="post" enctype="multipart/form-data"
