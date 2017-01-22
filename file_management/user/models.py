@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import signals
+from django.utils.timezone import now
+
 from documents.models import FluxInstance
 from user.constants import UserRoles
 
@@ -10,6 +12,7 @@ class Notification(models.Model):
     to_user = models.ForeignKey(User, related_name='received_notifications', null=True, blank=True)
     flux = models.ForeignKey(FluxInstance, related_name='messages', null=True, blank=True)
     message = models.CharField(max_length=300, null=False, blank=False, default="")
+    date = models.DateField(null=True, blank=True, default=now)
 
     def __str__(self):
         return "from: {}, to: {}, message: {}".format(self.from_user, self.to_user, self.message)
