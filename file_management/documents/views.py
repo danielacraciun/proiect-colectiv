@@ -325,7 +325,7 @@ def step_create(request):
         t = Template.objects.get(id=tmp_id) if int(tmp_id) > 0 else None
         s = Step(name=title, template_file=t, document=None)
         s.save()
-        logger.info('User {} added Step {} with Template {}'.format(request.user, s.name, t.filename))
+        logger.info('User {} added Step {} with Template {}'.format(request.user, s.name, t.filename if int(tmp_id) > 0 else 'None'))
         return HttpResponseRedirect(reverse('create_flow'))
     else:
         user_choices = list(Template.objects.values_list('id', 'filename'))
