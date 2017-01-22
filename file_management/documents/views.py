@@ -423,7 +423,6 @@ def new_flux(request, pk=None):
 
 
 def sign_doc(request, *args, **kwargs):
-    import pudb; pu.db
     logger = logging.getLogger('documents')
     obj = Document.objects.filter(id=kwargs['pk']).first()
     if not obj:
