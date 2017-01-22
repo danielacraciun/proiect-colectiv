@@ -35,7 +35,7 @@ def workspace(request):
             newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                               filename=request.FILES['docfile'].name, abstract=request.POST['abstract'],
                               keywords=request.POST['keywords'],
-                              requires_signature=request.POST['signature_required'] == 'on')
+                              requires_signature=request.POST.get('signature_required', 'off') == 'on')
             if existing and existing[0].status == 0:
                 newdoc.filename = existing[0].filename
                 newdoc.version = existing[0].version + 0.1
@@ -78,10 +78,15 @@ def workspace(request):
     # status 0 means draft
     items = Document.objects.filter(status__in=[0, 1, 2], author=request.user).exclude(status=3)
     # Render list page with the documents and the form
+    items2, item_ids = [], []
+    for item in items:
+        if item.filename not in item_ids:
+            items2.append(item)
+            item_ids.append(item.filename)
     return render(
         request,
         'documents.html',
-        {'documents': items, 'form': form}
+        {'documents': items2, 'form': form}
     )
 
 

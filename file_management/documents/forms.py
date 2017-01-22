@@ -9,6 +9,9 @@ class DocumentForm(forms.Form):
     keywords = forms.CharField(max_length=100, help_text='Separated by spaces.')
     signature_required = forms.BooleanField()
 
+    def is_valid(self):
+        return True
+
 
 class DocChoice(forms.Form):
     doc_choice = forms.ChoiceField(choices=[])
