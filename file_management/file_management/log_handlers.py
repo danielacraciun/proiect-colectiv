@@ -71,7 +71,6 @@ class SQLiteHandler(logging.Handler):
                    """
 
     def __init__(self, db=os.path.join(BASE_DIR, 'db.sqlite3')):
-
         logging.Handler.__init__(self)
         self.db = db
         # Create table if needed:
