@@ -20,11 +20,16 @@
                         {% endif %}
                         <br> {{ field }} <br> <br>
                     {% endfor %}
-                {% for field in form.hidden_fields %}
-                    {{ field }}
-                {% endfor %}
+                    {% for field in form.hidden_fields %}
+                        {{ field }}
+                    {% endfor %}
                     <button type="submit" class="btn btn-default">Submit</button>
                 </div>
+            </form>
+            <form action="{% url 'new_task' pk=obj.id %}" method="post" enctype="multipart/form-data" role="form">
+                {% csrf_token %}
+                <input type="hidden" name="cancel" value="true" />
+                <button type="submit" class="btn btn-default">Cancel</button>
             </form>
         </div>
     </div><br/>

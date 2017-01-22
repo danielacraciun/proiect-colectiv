@@ -367,6 +367,13 @@ def review_flux(request, pk):
 def new_flux(request, pk=None):
     if request.method == 'POST':
         obj = FluxInstance.objects.get(id=pk)
+
+        if 'cancel' in request.POST and request.POST['cancel'] == 'true':
+            for step in obj.steps.all():
+                step.delete()
+            obj.delete()
+            return HttpResponseRedirect(reverse_lazy('init_tasks'))
+
         for i, step in enumerate(obj.steps.all()):
             new_doc_id = request.POST['doc_choice_{}'.format(i)]
             step_id = request.POST['orig_id_{}'.format(i)]
