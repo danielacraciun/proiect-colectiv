@@ -34,8 +34,11 @@ def workspace(request):
             for item in existing_versioned:
                 if item.filename and origname.startswith(item.filename.split(".")[0]):
                     existing.append(item)
+            import pudb;pu.db
             newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
-                              filename=request.FILES['docfile'].name)
+                              filename=request.FILES['docfile'].name, abstract=request.POST['abstract'],
+                              keywords=request.POST['keywords'],
+                              requires_signature=request.POST['signature_required'] == 'on')
             if existing and existing[0].status == 0:
                 newdoc.filename = existing[0].filename
                 newdoc.version = existing[0].version + 0.1
@@ -66,8 +69,6 @@ def workspace(request):
                 newdoc.version = 0.1
                 newdoc.save()
             elif not existing:
-                newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
-                                  filename=request.FILES['docfile'].name)
                 newdoc.version = 0.1
                 newdoc.save()
             logger.info('User {} added version {} of Document {}'.format(request.user, newdoc.version, newdoc.filename))
@@ -428,3 +429,19 @@ def new_flux(request, pk=None):
                 'links': links
             }
         )
+
+
+def sign_doc(request, *args, **kwargs):
+    logger = logging.getLogger('documents')
+    obj = Document.objects.filter(id=kwargs['pk']).first()
+    if not obj:
+        logger.error('User {} encountered error. Could not find document'.format(request.user))
+        raise Http404()
+    obj.signed_by = request.user
+    obj.signed = True
+    obj.save()
+    logger.info('User {} signed document {}'.format(request.user, obj.filename))
+    return render(
+        request,
+        'flux_manage_detail.html',
+        {'obj': FluxInstance.objects.filter(pk=kwargs['pkf']).first()})

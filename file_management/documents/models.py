@@ -61,6 +61,8 @@ class Document(models.Model):
         choices=DocumentState.CHOICES, default=DocumentState.DRAFT)
     version = models.FloatField(null=False, blank=False, default=0.1)
     signed = models.BooleanField(null=False, blank=False, default=False)
+    requires_signature = models.BooleanField(null=False, blank=False, default=False)
+    signed_by = models.ForeignKey(User, related_name='signatures', null=True, blank=True)
     stale = models.BooleanField(null=False, blank=False, default=False)
     stale_on = models.DateTimeField(null=True, blank=True)
 

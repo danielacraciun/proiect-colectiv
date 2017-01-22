@@ -12,6 +12,7 @@
                 <th>Versiune</th>
                 <th>Status</th>
                 <th>Semnat</th>
+                <th>Necesita semnatura</th>
                 {% if request.user.profile.role > 1 %}
                 <th>Stergere</th>
                 {% endif %}
@@ -27,6 +28,7 @@
                 <td> {{ req.version|floatformat:1 }}</td>
                 <td> {{ req.get_status_display }} </td>
                 <td> {{ req.signed|yesno:"Yes,No" }}</td>
+                <td> {{ req.requires_signature|yesno:"Yes,No" }}</td>
                 <td>
                     {% if request.user.profile.role > 1 %}
                       {% if request.user.username == req.author.username %}
