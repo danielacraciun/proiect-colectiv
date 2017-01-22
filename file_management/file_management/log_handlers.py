@@ -1,12 +1,14 @@
-import sqlite3
 import logging
-import time
 import os
+import sqlite3
+import time
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+
 class SQLiteHandler(logging.Handler):
-    initial_sql = """CREATE TABLE IF NOT EXISTS log(
+    initial_sql = """CREATE TABLE IF NOT EXISTS log_module_log(
+                        Id int,
                         Created text,
                         Name text,
                         LogLevel int,
@@ -27,7 +29,7 @@ class SQLiteHandler(logging.Handler):
                         Flow text
                    )"""
 
-    insertion_sql = """INSERT INTO log(
+    insertion_sql = """INSERT INTO log_module_log(
                         Created,
                         Name,
                         LogLevel,
@@ -70,7 +72,6 @@ class SQLiteHandler(logging.Handler):
                    """
 
     def __init__(self, db=os.path.join(BASE_DIR, 'db.sqlite3')):
-    
         logging.Handler.__init__(self)
         self.db = db
         # Create table if needed:
@@ -82,7 +83,7 @@ class SQLiteHandler(logging.Handler):
         record.dbtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created))
 
     def emit(self, record):
-       
+
         # Use default formatting:
         self.format(record)
         # Set the database time up:

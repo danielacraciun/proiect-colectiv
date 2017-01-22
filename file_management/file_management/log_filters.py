@@ -1,7 +1,8 @@
 import logging
 
+
 class UserAndDocumentFilter(logging.Filter):
-    def __init__(self, user = 'None', document = 'None', template = 'None', step = 'None', flow = 'None'):
+    def __init__(self, user='None', document='None', template='None', step='None', flow='None'):
         self.user = user
         self.document = document
         self.template = template

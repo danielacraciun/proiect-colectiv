@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+<h1> Filtrare log-uri: </h1>
+<form method="post" class="form-horizontal" role="form">
+    {% csrf_token %}
+    <p>
+        {{ form.non_field_errors }}
+        {{ form.errors }}
+    </p>
+
+    <fieldset class="form-group">
+        {{ form.user.label_tag }}
+        {{ form.user| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.document.label_tag }}
+        {{ form.document| add_class:"form-control" }}
+    </fieldset>
+    <fieldset class="form-group">
+        {{ form.template.label_tag }}
+        {{ form.template| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.step.label_tag }}
+        {{ form.flow| add_class:"form-control" }}
+    </fieldset>
+
+    <fieldset class="form-group">
+        {{ form.date_from.label_tag }}
+        {{ form.date_from| add_class:"form-control" }}
+    </fieldset>
+    <fieldset class="form-group">
+        {{ form.date_to.label_tag }}
+        {{ form.date_to| add_class:"form-control" }}
+    </fieldset>
+
+    <div class="form-group">
+        <div class="col-sm-2">
+            <input type="submit" class="btn btn-default value="Filter" />
+        </div>
+    </div>
+</form>
+
+{% if logs %}
+<h1> Logs </h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Created</th>
+            <th>Name</th>
+            <th>LogLevel</th>
+            <th>LogLevelName</th>
+            <th>Message</th>
+            <th>Args</th>
+            <th>Module</th>
+            <th>FuncName</th>
+            <th>LineNo</th>
+            <th>Exception</th>
+            <th>Process</th>
+            <th>Thread</th>
+            <th>ThreadName</th>
+            <th>User</th>
+            <th>Document</th>
+            <th>Template</th>
+            <th>Step</th>
+            <th>Flow</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in logs %}
+        <tr>
+            <td> {{ req.created|date:'Y-m-d H:i' }} </td>
+            <td> {{ req.name }}</td>
+            <td> {{ req.loglevel}}</td>
+            <td> {{ req.loglevelname }}</td>
+            <td> {{ req.message }}</td>
+            <td> {{ req.args}}</td>
+            <td> {{ req.module }}</td>
+            <td> {{ req.funcname }}</td>
+            <td> {{ req.lineno}}</td>
+            <td> {{ req.exception }}</td>
+            <td> {{ req.process }}</td>
+            <td> {{ req.thread}}</td>
+            <td> {{ req.threadname }}</td>
+            <td> {{ req.user }}</td>
+            <td> {{ req.document}}</td>
+            <td> {{ req.template }}</td>
+            <td> {{ req.step }}</td>
+            <td> {{ req.flow}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No logs yet.</p>
+{% endif %}
+
+{% endblock %}
