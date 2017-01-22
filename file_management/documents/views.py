@@ -74,9 +74,11 @@ def workspace(request):
     else:
         form = DocumentForm()  # A empty, unbound form
 
+
     # Load documents for the list page
     # status 0 means draft
     items = Document.objects.filter(status__in=[0, 1, 2], author=request.user).exclude(status=3)
+    import pudb; pu.db
     # Render list page with the documents and the form
     items2, item_ids = [], []
     for item in items:
@@ -330,7 +332,7 @@ def reject_flow(request, *args, **kwargs):
             to_user=obj.initiated_by, from_user=request.user, flux=obj,
             message="Fluxul {} a fost refuzat! Motiv: {}".format(obj.flux_parent.title, msg))
         n.save()
-    logger.info('User {} rejected Flow {}'.format(request.user, obj.title))
+    logger.info('User {} rejected Flow {}'.format(request.user, obj.flux_parent.title))
     return redirect('current_tasks')
 
 
