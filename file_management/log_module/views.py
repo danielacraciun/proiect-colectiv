@@ -6,7 +6,7 @@ from log_module.forms import LogForm
 # Create your views here.
 
 def set_if_not_none(mapping, key, value):
-    if value is not None:
+    if value is not '':
         mapping[key] = value
 
 
@@ -14,10 +14,10 @@ def logs(request):
     if request.method == 'POST':
         form = LogForm(request.POST)
         if form.is_valid():
-            key_list = ['user', 'document', 'template', 'step', 'flow']
             filter_by = {}
+            key_list = ['user', 'document', 'template', 'step', 'flow']
             for key in key_list:
-                set_if_not_none(filter_by, key, form.fields[key])
+                set_if_not_none(filter_by, key, form.cleaned_data[key])
             logs = Log.objects.filter(**filter_by)
     else:
         form = LogForm()
