@@ -1,3 +1,5 @@
+import logging
+
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.forms import IntegerField, HiddenInput
 from django.forms import ModelForm, ChoiceField, BaseForm, CharField
@@ -5,7 +7,6 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.shortcuts import render
-from django.utils.html import format_html
 from django.views.generic import CreateView
 from django.views.generic import TemplateView, DetailView, DeleteView
 
@@ -16,9 +17,6 @@ from documents.models import Document, FluxInstance, FluxStatus, Step
 from documents.models import FluxModel
 from templateuri.models import Template
 from user.models import Notification
-from django.db.models import Q
-
-import logging
 
 
 def workspace(request):
@@ -34,7 +32,6 @@ def workspace(request):
             for item in existing_versioned:
                 if item.filename and origname.startswith(item.filename.split(".")[0]):
                     existing.append(item)
-            import pudb;pu.db
             newdoc = Document(docfile=request.FILES['docfile'], author=request.user,
                               filename=request.FILES['docfile'].name, abstract=request.POST['abstract'],
                               keywords=request.POST['keywords'],
@@ -129,6 +126,19 @@ class InitiatedTasks(TemplateView):
     template_name = 'init_tasks.html'
     model = FluxInstance
 
+    def get_form(self):
+        form = FluxInstanceForm()
+        flux_model_ids = set()
+        for flux_model in FluxModel.objects.all():
+            if flux_model.groups:
+                for group in flux_model.groups.all():
+                    if self.request.user in group.user_set.all():
+                        flux_model_ids.add(flux_model.id)
+            else:
+                flux_model_ids.add(flux_model.id)
+        form.fields['flux_model_select'].queryset = FluxModel.objects.filter(id__in=flux_model_ids)
+        return form
+
     def get_queryset(self):
         tasks = FluxInstance.objects.filter(initiated_by=self.request.user).filter(status=FluxStatus.PENDING)
         return tasks
@@ -136,7 +146,7 @@ class InitiatedTasks(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(InitiatedTasks, self).get_context_data()
         context['object_list'] = self.get_queryset()
-        context['form'] = FluxInstanceForm
+        context['form'] = self.get_form()
         return context
 
 
@@ -221,6 +231,9 @@ class FinishedTasks(TemplateView):
     def get_queryset(self):
         to_show_id = []
         tasks = FluxInstance.objects.filter(status__in=[FluxStatus.ACCEPTED, FluxStatus.REJECTED])
+        if self.request.user.profile.role == 1:
+            return tasks
+
         for task in tasks:
             if task.initiated_by.id == self.request.user.id:
                 to_show_id.append(task.id)

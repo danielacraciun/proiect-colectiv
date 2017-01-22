@@ -13,27 +13,39 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li>
-                    <a href="{% url 'workspace' %}">Zona de lucru</a>
-                </li>
-                <li>
-                    <a href="{% url 'create_flow' %}">Create Flow</a>
-                </li>
-                <li>
-                    <a href="{% url 'template_list' %}">Template-uri</a>
-                </li>
-                <li>
-                    <a href="{% url 'init_tasks' %}">Task-uri initiate</a>
-                </li>
-                <li>
-                    <a href="{% url 'current_tasks' %}">Task-uri</a>
-                </li>
+                {% if request.user.profile.role > 1 %}
+                    <li>
+                        <a href="{% url 'workspace' %}">Zona de lucru</a>
+                    </li>
+                {% endif %}
+                {% if request.user.profile.role > 2 %}
+                    <li>
+                        <a href="{% url 'create_flow' %}">Create Flow</a>
+                    </li>
+                {% endif %}
+                {% if request.user.profile.role > 2 %}
+                    <li>
+                        <a href="{% url 'template_list' %}">Template-uri</a>
+                    </li>
+                {% endif %}
+                {% if request.user.profile.role > 1 %}
+                    <li>
+                        <a href="{% url 'init_tasks' %}">Task-uri initiate</a>
+                    </li>
+                {% endif %}
+                {% if request.user.profile.role > 2 %}
+                    <li>
+                        <a href="{% url 'current_tasks' %}">Task-uri</a>
+                    </li>
+                {% endif %}
                 <li>
                     <a href="{% url 'fin_tasks' %}">Task-uri terminate</a>
                 </li>
-                <li>
-                    <a href="{% url 'notifications' %}">Notifications</a>
-                </li>
+                {% if request.user.profile.role > 1 %}
+                    <li>
+                        <a href="{% url 'notifications' %}">Notifications</a>
+                    </li>
+                {% endif %}
                 <li>
                     <a href="{% url 'filter_logs' %}">Log-uri</a>
                 </li>
