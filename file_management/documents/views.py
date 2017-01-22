@@ -395,7 +395,8 @@ def new_flux(request, pk=None):
         obj.save()
 
         user_choices = list(
-            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename'))
+            Document.objects.filter(author=request.user, status__in=[1, 2]).values_list('id', 'filename', 'version'))
+        user_choices = [(idx, filename + ": version %.2f" % version) for idx, filename, version in user_choices]
         fields = {"numsteps": IntegerField(widget=HiddenInput(), initial=len(list(flux_model.steps.all())))}
 
         links = {}
